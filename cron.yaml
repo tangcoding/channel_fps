@@ -1,0 +1,4 @@
+cron:
+- description: clear old game id
+  url: /clear_game
+  schedule: every day 23:59

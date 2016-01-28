@@ -1,0 +1,28 @@
+application:  firstpersonshooter-1138 
+version: alpha-007
+runtime: python27
+api_version: 1
+threadsafe: true
+
+# inbound_services:
+# - channel_presence
+
+handlers:
+
+- url: /js
+  static_dir: js
+
+- url: /images
+  static_dir: images
+
+- url: /audio
+  static_dir: audio
+
+- url: /.*
+  script: channel_fps.app
+
+# [START libraries]
+libraries:
+- name: webapp2
+  version: 2.5.1
+# [END libraries]

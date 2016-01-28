@@ -1,0 +1,2824 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>First Person Shooter Game</title>
+    <style>
+        body{margin: 0; padding: 0; font-family:'Helvetica Neue',sans-serif;  cursor: crosshair;overflow: hidden;}
+        /*scoreboard*/
+        #scoreboard {position: fixed; top: 0; right: 0; /*width: 350px;*/ text-align: center; font-family: serif; font-size: 1rem; display: none; background: #aaa; border-radius: 5px; padding: 0 0.3rem;}
+        #scoreboard table {border-bottom: 1px solid #fff; }
+        #scoreboard p {margin: 8px auto;}
+        #scoretable th{color: #1E88E5; padding: 0 6px;}
+        .color_cl{width: 10px;}
+        #color1{background: yellow; }
+        #color2{background: orange; }
+
+        /*general css for .info_page*/
+        .info_page{ position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: grey; opacity: 0.85; text-align: center; color: #fff; z-index: 100; display: none;}
+        .info_page h1{margin-top: 60px; font-family: cursive; font-weight: bolder; font-size: 3rem;}
+        .info_page h2{margin: 35px auto 15px auto; font-family: cursive; font-weight: bolder; font-size: 2rem;text-shadow:cyan 0 -1px 3px;}
+        .info_page h3{margin-top: 25px; font-family: cursive; font-weight: bolder; font-size: 1.5rem; color: #d04c4c;}
+        .info_page h4{margin: 15px;}
+        .cyan{color: cyan;}
+
+        /* instruction page */
+        button{font-size: 1rem; padding: 5px 15px; color: #fff; border-radius: 16px;  border: none; margin: 0 auto; cursor: pointer; outline: none; background: #009688; font-family:'Helvetica Neue',sans-serif; text-shadow:#C17C3A 0 -1px 0;}
+        button:hover{transform: scale(1.15); -webkit-transform: scale(1.15);}
+        #game_info, #game_link{color:cyan; }
+        #mini_map{position: fixed; top:0; left: 0; width: 200px; height: 200px; background: #73c3aa; z-index: 90;}
+        #instruction, #game_start {display: block;}
+        #instruction p{margin: 5px auto;}
+        .waiting, .not_waiting{display: none;}
+        #choose_game_type button{ margin: 0 12px;}
+        /* other info pages */
+        #heal {background: green; opacity: 0.35;}
+        #hurt {background: red; opacity: 0.35; }
+        .how_to_play{margin: 15px auto; text-align: left; width: 25rem;}
+        #game_start, #resume{margin: 12px auto; background: orange; border: 1px solid #fff; }
+        .startover{border: 1px solid #fff;  background: #00BCD4; margin: 20px 20px;}
+        #result_text{color: #fff; margin: 3.5rem auto 25px auto; text-shadow:cyan 0 -1px 6px;}
+        .top_scores{margin: 15px auto; border-radius: 10px; background: steelblue; padding: 15px; font-family:'Helvetica Neue',sans-serif; text-shadow:#C17C3A 0 -1px 0; font-size: 1rem;}
+        .top_scores td{padding: 5px 10px;}
+        .top_scores th{border-bottom: 1px solid #fff;}
+
+        .mouse_displaySVG { position: absolute; right: 0; bottom: 0; z-index: 80; }
+
+        /* start button amination */
+        .animated {  
+           -webkit-animation-duration: 2s; 
+            animation-duration: 2s; 
+            -webkit-animation-fill-mode: both; 
+            animation-fill-mode: both; 
+            animation-iteration-count:infinite; 
+            -webkit-animation-iteration-count:infinite; 
+        } 
+
+        @-webkit-keyframes pulse { 
+            0% { -webkit-transform: scale(1); } 
+            50% { -webkit-transform: scale(1.2); } 
+            100% { -webkit-transform: scale(1); } 
+        } 
+        @keyframes pulse { 
+            0% { transform: scale(1); } 
+            50% { transform: scale(1.1); } 
+            100% { transform: scale(1); } 
+        } 
+        .pulse { 
+            -webkit-animation-name: pulse; 
+            animation-name: pulse; 
+        }
+
+        /*choose player number*/
+        #choose_player { display: none;}
+        .player_btn { margin: 0 8px; }
+        
+        /* choose game id */
+        #choose_game_id{position:  absolute; top: 200px; left: 50px; background: #009688; border-radius:  10px; display: none; text-shadow:#C17C3A 0 -1px 0; box-shadow: 2px 2px 8px #aaa; padding: 0 5px; border: 1px solid #fff;}
+        .change_game_id{display: block; border: none; background: none;}
+        #close_game_id{position: absolute; top:-8px; right: -8px; border-radius: 10px; border: 2px solid #fff; background: cyan; display: none;}
+        .animated2 { 
+          -webkit-animation-duration: 2s; 
+          animation-duration: 2s; 
+          -webkit-animation-fill-mode: both; 
+          animation-fill-mode: both; 
+        } 
+
+        @-webkit-keyframes flipInX { 
+            0% { -webkit-transform: perspective(400px) rotateX(90deg); 
+                  opacity: 0; 
+            } 
+            40% { -webkit-transform: perspective(400px) rotateX(-10deg); } 
+            70% { -webkit-transform: perspective(400px) rotateX(10deg); } 
+            100% { -webkit-transform: perspective(400px) rotateX(0deg); 
+                   opacity: 1; 
+            } 
+        } 
+        @keyframes flipInX { 
+            0% {  transform: perspective(400px) rotateX(90deg); 
+                  opacity: 0; 
+            } 
+            40% { transform: perspective(400px) rotateX(-10deg); } 
+            70% { transform: perspective(400px) rotateX(10deg); } 
+            100% { transform: perspective(400px) rotateX(0deg); 
+                   opacity: 1; 
+            } 
+        } 
+        .flipInX { 
+            -webkit-backface-visibility: visible ; /*important*/
+            -webkit-animation-name: flipInX; 
+            backface-visibility: visible; /*important*/
+            animation-name: flipInX; 
+        }
+
+
+        /* control pannel*/
+        .control{ position: absolute; bottom: 0; left: 10px; z-index: 110; height: 35px;}
+        .control_btn {width: 35px; height: 35px; border: none; margin: auto; vertical-align: top;}
+        #question{background: url("/images/question.png"); background-size: cover;background-repeat: no-repeat; }
+        #home{background: url("/images/home.png"); background-size: cover;background-repeat: no-repeat;  }
+        #setting{background: url("/images/setting.png"); background-size: cover;background-repeat: no-repeat; }
+        #key_error{color:red; display: none;}
+        #close_keyset{border: 1px solid #fff; background: orange;}
+        .sound_control{height: 35px; margin: auto; display: inline-block; text-align: center; font: sans-serif; font-weight: bolder; font-size: 12px; }
+
+        /* choose map btn */
+        #choose_map {margin: 20px auto;}
+        .map_btn{width: 100px; height: 100px; display: inline-block; margin: 15px; border: 1px solid #fff; border-radius: 5px;}
+        #map1{background: url("/images/map1.png");  box-shadow: 2px 2px 8px yellow;}
+        #map2{background: url("/images/map2.png"); }
+        #map3{background: url("/images/map3.png"); }
+        #map1, #map2, #map3{ background-size: cover;}
+
+        /* show direction pannel */
+        #direction{position: absolute; top:0; left: 200px; width: 55px; height: 45px;  z-index: 90;}
+        #topleft {background: url("/images/tl.png");}
+        #topright{background: url("/images/tr.png");}
+        #bottomright{background: url("/images/br.png");}
+        #bottomleft{background: url("/images/bl.png");}
+        #top{background: url("/images/t.png");}
+        #bottom{background: url("/images/b.png");}
+        #right{background: url("/images/r.png");}
+        #left{background: url("/images/l.png");}
+        #middle{outline: none; vertical-align: top;}
+        .arrow{ color:#000; font-size: 10px; text-align: center; outline: 1px solid #ccc; display: inline-block; width: 15px; height: 15px; opacity: 0.2; margin: 0; padding: 0;}
+
+        /* touch pannel */
+        .touch_pannel{position: absolute; bottom: 0; width: 100%; height: 200px; z-index: 100; display: none;}
+        #look_around{position: absolute; left: 10px; bottom: 90px; width: 150px; height: 40px; border: 2px solid #fff; font-size: 20px; padding: 0; background: url('/images/look_arrow.png'); background-repeat: no-repeat; background-position: center center;  opacity: 0.5; border-radius: 16px; }
+        #shoot_btn{position: absolute; right: 55px; bottom: 160px; width: 40px; height: 40px; background: orange; border-radius: 22px; border: 2px solid #fff; box-shadow: 1px 0px 1px 1px #aaa; padding: 0; font-size: 30px;text-align:  center; color: #fff;}
+        #move_around{position: absolute; right: 0; bottom: 0; width: 150px; height: 150px; background: url('/images/move_arrow.png');  opacity: 0.5; border: 1px solid #fff; }
+
+        /*responsive design */
+        @media screen and  (min-width: 450px) and (max-width: 700px) {
+          html {font-size: 11px;}
+          .info_page h1, .info_page h2, .info_page h3  {  margin: 12px auto 0 auto;}
+          .info_page h4, #choose_map h4, #game_info h4{/*font-size: 0.7rem;*/ margin: 8px auto 0 auto;}
+          button{/*font-size: 0.8rem;*/ padding: 3px 5px; color: #fff; border-radius: 10px;}
+          #game_start, #resume, .startover, #close_keyset{margin: 8px auto; }
+          .map_btn{width: 60px; height: 60px; margin: 0 10px;}
+          #mini_map{width: 100px; height: 100px;}
+          #direction{left: 100px; }
+          #scoreboard table{padding: 3px;}
+          #scoretable th{ padding: 0 3px;}
+          .status_cl{display: none;}
+          #result_text{margin: 12px auto 0 auto; }
+          .top_scores{margin: 8px auto; padding: 2px;}
+          #choose_game_id{ top: 90px; left: 10px; }
+          #choose_game_id h4{margin: 10px auto 0 auto;}
+          #close_game_id{ display: block;}
+        }
+
+        @media screen and  (max-width: 449px)  {
+          html {font-size: 11px;}
+          .info_page h1, .info_page h2, .info_page h3  {  margin: 12px auto 0 auto;}
+          .info_page h4, #choose_map h4, #game_info h4{/*font-size: 0.7rem;*/ margin: 8px auto 0 auto;}
+          button{ padding: 3px 8px; color: #fff; border-radius: 10px;}
+          #choose_game_type button{ margin: 12px auto; display: block;}
+          #game_start, #resume, .startover, #close_keyset{margin: 8px auto; }
+          .map_btn{width: 60px; height: 60px; margin: 5px 10px;}
+          #mini_map{width: 100px; height: 100px;}
+          #direction{left: 100px; }
+          #scoreboard table{padding: 3px;}
+          #scoretable th{ padding: 0 3px;}
+          .status_cl{display: none;}
+          #result_text{margin: 12px auto 0 auto; }
+          .top_scores{margin: 8px auto; padding: 2px;}
+          #choose_game_id{ top: 90px; left: 10px; }
+          #choose_game_id h4{margin: 10px auto 0 auto;}
+          #close_game_id{display: block;}
+        }
+    </style>
+  </head>
+
+  <body>
+    <div class="touch_pannel">
+      <div id="look_around"></div>
+      <div id="move_around"></div>
+      <div id="shoot_btn">+</div>
+    </div><!-- .touch_pannel -->
+
+    <div id='scoreboard'>
+      <table id='scoretable'>
+        <tr>
+          <th>Player</th>
+          <th class="color_cl"></th>
+          <th class="status_cl">Status</th>
+          <th>Score</th>
+          <th>Health</th>
+        </tr>
+        <tr class="p1_score">
+          <td id='p1'>1</td>
+          <td class="color_cl" id="color1"></td>
+          <td class="status_cl" id="status1"></td>
+          <td id="score1">online</td>
+          <td id="health1"></td>
+        </tr>    
+        <tr class="p2_score">
+          <td id='p2'>2</td>
+          <td class="color_cl" id="color2"></td>
+          <td class="status_cl" id="status2">online</td>
+          <td id="score2"></td>
+          <td id="health2"></td>
+        </tr>  
+      </table>
+      <p id = "play_time"></p>
+    </div><!-- #scoreboard -->
+
+    <div class="info_page" id="instruction">
+      <h2> First Person Shooter Game </h2>
+      <h4 id="game_info">Current Game ID:{{ game_link }}</h4>
+      <hr>
+
+      <div id="choose_game_type">
+        <h4>Choose game type:
+          <button class="game_type_btn" id="em">Explore Maze</button>
+          <button class="game_type_btn" id="s3">Survive 3 Mins</button>
+          <button class="game_type_btn" id="cf">Get Flag</button>
+        </h4>
+      </div><!-- .choose_game_type -->
+
+      <div id="choose_player">
+        <h4>Choose number of player(s):
+          <button class="player_btn" id="1player">One</button>
+          <button class="player_btn" id="2player">Two</button>
+        </h4>
+      </div><!-- .choose_player -->
+
+      <div id="choose_game_id" class="animated2 flipInX">
+        <button id="close_game_id">X</button>
+        <h4>Games need 2nd player</h4>
+        <h4>(click id to join)</h4>
+        <hr>
+        <div class= "avail_ids"></div>
+      </div><!-- .choose_player -->
+
+      <div id="choose_map">
+        <h4>Choose a map:
+        <button class="map_btn" id="map1"></button>
+        <button class="map_btn" id="map2"></button>
+        <button class="map_btn" id="map3"></button>
+        </h4>
+      </div><!-- .choose_map -->
+
+      <h4 class="waiting">Waiting for another player ...</h4>
+      <h4 class="not_waiting cyan">Another player joins in ...</h4>
+      <button id="game_start" class="animated pulse"> START </button>
+      <p>Log in to save your score: {{ user_name }} <a href="{{ login_key }}">{{ gate }}</a></p>
+    </div><!-- #instruction -->
+
+    <div class="info_page" id="ready">
+      <h2> Ready </h2>
+      <h2> GO </h2>
+    </div><!-- #ready -->
+
+    <div class="info_page" id="pause">
+      <h2> First Person Shooter Game </h2>
+      <hr>
+      <div class="how_to_play">
+        <!-- <h4><span class="cyan">Explor Maze:</span> explore the maze and move around</h4>
+        <h4><span class="cyan">Survive 3 Minutes:</span> score as many as you can in 3 minutes</h4>
+        <h4><span class="cyan">Capture Flag:</span> get to the flag (red) as soon as you can</h4>
+        <h4><span class="cyan">If you die:</span> your score, health and position will be reset </h4> -->
+        <br>
+        <h3><span class="cyan">How to Play:</span></h3>
+        <h4 class="pc" ><span class="cyan">Move:</span> W, S, A, D </h4>
+        <h4 class="pc" ><span class="cyan">Look Around:</span> Mouse Move</h4> 
+        <h4 class="pc" ><span class="cyan">Shoot:</span> Mouse Click</h4>
+
+        <h4 class="mobile" ><span class="cyan">Move:</span> Slide on MOVE Area </h4>
+        <h4 class="mobile" ><span class="cyan">Look Around:</span> Slide on LOOK Area </h4>
+        <h4 class="mobile" ><span class="cyan">Shoot:</span> Cross Button</h4>
+        <h4><span class="cyan">Play with Another Friend:</span> <br>ask you friend to join the game <span id="game_link">{{ game_link }}</span> </h4>
+      </div><!-- .how_to_play -->
+      <button id="resume" class="animated pulse" >Resume</button>
+      <button class="startover">StartOver</button>
+    </div><!-- #pause -->
+
+    <div class="info_page" id="result">
+      <h1 id="result_text"></h1>
+      <table class="top_scores animated2 flipInX">
+        <tr>
+          <th>Rank</th>
+          <th>User</th>
+          <th>Time</th>
+          <th>Score</th>
+        </tr>
+      </table>
+      <button class="startover"> Start A New Game </button>
+    </div><!-- #results -->
+
+    <div class="info_page" id="reset">
+      <h2> You Die </h2>
+      <h2> Reset ...</h2>
+    </div><!-- #reset -->
+
+    <div class="info_page" id="choose_key">
+      <h2> Sounds: </h2>
+      Shoot sound on:<input type="radio" name="shoot_sound" value="on" checked>
+      off:<input type="radio" name="shoot_sound" value="off">
+      <br>
+      Bird sound on:<input type="radio" name="bird_sound" value="on" checked>
+      off:<input type="radio" name="bird_sound" value="off">
+      <hr>
+      <h2> Define Your Own Keys: </h2>
+      <h4 class="cyan"> choose a movement and press the key for this movement:</h4>
+      Left:<input type="radio" name="moving_direction" value="left" checked>
+      Right:<input type="radio" name="moving_direction" value="right">
+      Forward:<input type="radio" name="moving_direction" value="forward">
+      Backward:<input type="radio" name="moving_direction" value="backward">
+      <h4>Current:</h4>
+      <h4>Left:&nbsp;<span class="left cyan">A</span>, Right:&nbsp;<span class="right  cyan">D</span>, Forward:&nbsp;<span class="forward  cyan">W</span>, Backward:&nbsp;<span class="backward  cyan">S</span> </h4>
+      <h4 id="key_error">One key is used for multiple movements!</h4>
+      <button id="close_keyset">Close</button>
+    </div><!-- #choose_key -->
+
+    <div class="control">
+      <button class="control_btn" id="home" title="main menu"></button>
+      <button class="control_btn" id="question" title="how to play"></button>
+      <button class="control_btn" id="setting" title="settings"></button>
+      <!-- <button id="ai_shoot">ai_off</button> -->
+    </div><!-- #control -->
+
+    <div id="mini_map"></div>
+
+    <div id="direction">
+      <div class="arrow" id="topleft"></div>
+      <div class="arrow" id="top"></div>
+      <div class="arrow" id="topright"></div>
+      <div class="arrow" id="left"></div>
+      <div class="arrow" id="middle">&#9632</div>
+      <div class="arrow" id="right"></div>
+      <div class="arrow" id="bottomleft"></div>
+      <div class="arrow" id="bottom"></div>
+      <div class="arrow" id="bottomright"></div>
+    </div><!-- .direction -->
+
+    <div class="info_page" id="hurt"></div>
+    <div class="info_page" id="heal"></div>
+
+    <!-- audio -->
+    <audio id="player_sound" src="/audio/player_sound.m4a" ></audio>
+    <audio id="blast" src="/audio/explosion.m4a" ></audio>
+    <audio id="ai_sound" src="/audio/ai_sound.m4a" ></audio>
+    <audio id="birds" src="/audio/birds008.mp3" ></audio>
+
+    <!-- script -->
+    <script src='/_ah/channel/jsapi'></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r72/three.min.js"></script> 
+    <script src="/js/Flag.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+    <!-- <script src='/js/SubdivisionModifier.js'></script> -->
+
+    <!--  custom Shader  for cube glow -->
+    <script id="vertexShader" type="x-shader/x-vertex">
+      uniform vec3 viewVector;
+      uniform float c;
+      uniform float p;
+      varying float intensity;
+      void main() 
+      {
+          vec3 vNormal = normalize( normalMatrix * normal );
+        vec3 vNormel = normalize( normalMatrix * viewVector );
+        intensity = pow( c - dot(vNormal, vNormel), p );
+        
+          gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+      }
+    </script>
+
+    <!-- fragment shader a.k.a. pixel shader for cube glow-->
+    <script id="fragmentShader" type="x-shader/x-vertex"> 
+      uniform vec3 glowColor;
+      varying float intensity;
+      void main() 
+      {
+        vec3 glow = glowColor * intensity;
+          gl_FragColor = vec4( glow, 0.3 );
+          // gl_FragColor = vec4( glowColor, 0.5);
+      }
+    </script>
+
+    <!-- code for making fireball with perlin noise -->
+    <script id="perlin_vertexShader" type="x-shader/x-vertex" >
+
+      //
+      // GLSL textureless classic 3D noise "cnoise",
+      // with an RSL-style periodic variant "pnoise".
+      // Author:  Stefan Gustavson (stefan.gustavson@liu.se)
+      // Version: 2011-10-11
+      //
+      // Many thanks to Ian McEwan of Ashima Arts for the
+      // ideas for permutation and gradient selection.
+      //
+      // Copyright (c) 2011 Stefan Gustavson. All rights reserved.
+      // Distributed under the MIT license. See LICENSE file.
+      // https://github.com/ashima/webgl-noise
+      //
+
+      vec3 mod289(vec3 x)
+      {
+        return x - floor(x * (1.0 / 289.0)) * 289.0;
+      }
+
+      vec4 mod289(vec4 x)
+      {
+        return x - floor(x * (1.0 / 289.0)) * 289.0;
+      }
+
+      vec4 permute(vec4 x)
+      {
+        return mod289(((x*34.0)+1.0)*x);
+      }
+
+      vec4 taylorInvSqrt(vec4 r)
+      {
+        return 1.79284291400159 - 0.85373472095314 * r;
+      }
+
+      vec3 fade(vec3 t) {
+        return t*t*t*(t*(t*6.0-15.0)+10.0);
+      }
+
+      // Classic Perlin noise
+      float cnoise(vec3 P)
+      {
+        vec3 Pi0 = floor(P); // Integer part for indexing
+        vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1
+        Pi0 = mod289(Pi0);
+        Pi1 = mod289(Pi1);
+        vec3 Pf0 = fract(P); // Fractional part for interpolation
+        vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0
+        vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);
+        vec4 iy = vec4(Pi0.yy, Pi1.yy);
+        vec4 iz0 = Pi0.zzzz;
+        vec4 iz1 = Pi1.zzzz;
+
+        vec4 ixy = permute(permute(ix) + iy);
+        vec4 ixy0 = permute(ixy + iz0);
+        vec4 ixy1 = permute(ixy + iz1);
+
+        vec4 gx0 = ixy0 * (1.0 / 7.0);
+        vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;
+        gx0 = fract(gx0);
+        vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);
+        vec4 sz0 = step(gz0, vec4(0.0));
+        gx0 -= sz0 * (step(0.0, gx0) - 0.5);
+        gy0 -= sz0 * (step(0.0, gy0) - 0.5);
+
+        vec4 gx1 = ixy1 * (1.0 / 7.0);
+        vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;
+        gx1 = fract(gx1);
+        vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);
+        vec4 sz1 = step(gz1, vec4(0.0));
+        gx1 -= sz1 * (step(0.0, gx1) - 0.5);
+        gy1 -= sz1 * (step(0.0, gy1) - 0.5);
+
+        vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);
+        vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);
+        vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);
+        vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);
+        vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);
+        vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);
+        vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);
+        vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);
+
+        vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
+        g000 *= norm0.x;
+        g010 *= norm0.y;
+        g100 *= norm0.z;
+        g110 *= norm0.w;
+        vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
+        g001 *= norm1.x;
+        g011 *= norm1.y;
+        g101 *= norm1.z;
+        g111 *= norm1.w;
+
+        float n000 = dot(g000, Pf0);
+        float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));
+        float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));
+        float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));
+        float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));
+        float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));
+        float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));
+        float n111 = dot(g111, Pf1);
+
+        vec3 fade_xyz = fade(Pf0);
+        vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);
+        vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
+        float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
+        return 2.2 * n_xyz;
+      }
+
+      // Classic Perlin noise, periodic variant
+      float pnoise(vec3 P, vec3 rep)
+      {
+        vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period
+        vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period
+        Pi0 = mod289(Pi0);
+        Pi1 = mod289(Pi1);
+        vec3 Pf0 = fract(P); // Fractional part for interpolation
+        vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0
+        vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);
+        vec4 iy = vec4(Pi0.yy, Pi1.yy);
+        vec4 iz0 = Pi0.zzzz;
+        vec4 iz1 = Pi1.zzzz;
+
+        vec4 ixy = permute(permute(ix) + iy);
+        vec4 ixy0 = permute(ixy + iz0);
+        vec4 ixy1 = permute(ixy + iz1);
+
+        vec4 gx0 = ixy0 * (1.0 / 7.0);
+        vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;
+        gx0 = fract(gx0);
+        vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);
+        vec4 sz0 = step(gz0, vec4(0.0));
+        gx0 -= sz0 * (step(0.0, gx0) - 0.5);
+        gy0 -= sz0 * (step(0.0, gy0) - 0.5);
+
+        vec4 gx1 = ixy1 * (1.0 / 7.0);
+        vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;
+        gx1 = fract(gx1);
+        vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);
+        vec4 sz1 = step(gz1, vec4(0.0));
+        gx1 -= sz1 * (step(0.0, gx1) - 0.5);
+        gy1 -= sz1 * (step(0.0, gy1) - 0.5);
+
+        vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);
+        vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);
+        vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);
+        vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);
+        vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);
+        vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);
+        vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);
+        vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);
+
+        vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
+        g000 *= norm0.x;
+        g010 *= norm0.y;
+        g100 *= norm0.z;
+        g110 *= norm0.w;
+        vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
+        g001 *= norm1.x;
+        g011 *= norm1.y;
+        g101 *= norm1.z;
+        g111 *= norm1.w;
+
+        float n000 = dot(g000, Pf0);
+        float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));
+        float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));
+        float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));
+        float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));
+        float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));
+        float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));
+        float n111 = dot(g111, Pf1);
+
+        vec3 fade_xyz = fade(Pf0);
+        vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);
+        vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
+        float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
+        return 2.2 * n_xyz;
+      }
+
+      // Include the Ashima code here!
+       
+      varying float noise;
+      uniform float time;
+
+      float turbulence( vec3 p ) {
+        float w = 100.0;
+        float t = -.5;
+        for (float f = 1.0 ; f <= 10.0 ; f++ ){
+          float power = pow( 2.0, f );
+          t += abs( pnoise( vec3( power * p ), vec3( 10.0, 10.0, 10.0 ) ) / power );
+        }
+        return t;
+      }
+
+      void main() {
+
+        noise = 10.0 *  -.10 * turbulence( .5 * normal + time );
+        float b = 5.0 * pnoise( 0.05 * position + vec3( 2.0 * time ), vec3( 100.0 ) );
+        float displacement = - 10. * noise + b;
+        
+        vec3 newPosition = position + normal * displacement;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
+
+      }
+    </script>
+
+    <script id="perlin_fragmentShader" type="x-shader/x-vertex" >
+      varying float noise;
+      uniform sampler2D tExplosion;
+
+      float random( vec3 scale, float seed ){
+        return fract( sin( dot( gl_FragCoord.xyz + seed, scale ) ) * 43758.5453 + seed ) ;
+      }
+
+      void main() {
+
+        float r = .01 * random( vec3( 12.9898, 78.233, 151.7182 ), 0.0 );
+        vec2 tPos = vec2( 0, 1.0 - 1.3 * noise + r );
+        vec4 color = texture2D( tExplosion, tPos );
+
+        gl_FragColor = vec4(color.rgb,0.3 );
+
+      }
+    </script>
+
+<script type="text/javascript">
+
+// -------------------------------------------- |
+// -        3D First Person Shooter Game      - |
+// -        with Three.js and d3.js           - |
+// -        by Wenjie Tang                    - |
+// -------------------------------------------- |
+
+// -------------------------------------------- |
+// -        Some Global Variables             - |
+// -------------------------------------------- |
+
+// game state
+var state = {
+  player_num: 1,
+  game_type: "em",
+  game_key: '{{ game_key }}',
+  me: '{{ me }}'
+};
+
+var gameStart = false;
+
+// scene object variables
+var renderer, scene, camera, pointLight, spotLight;
+
+// field variables
+var fieldWidth = 300, fieldHeight = 300;
+
+// cube variables
+var cubeX = 10, cubeY = 10, cubeZ = 30;
+
+// wall grid
+var gridSizeX = 30, gridSizeY = 30, wallGrid = [];
+
+// map
+var map1 = [ // 1  2  3  4  5  6  7  8  9
+           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,], 
+           [1, 1, 0, 0, 1, 0, 0, 1, 0, 1,], 
+           [1, 1, 0, 0, 0, 0, 0, 1, 0, 1,], 
+           [1, 0, 0, 1, 0, 2, 0, 0, 0, 1,], 
+           [1, 0, 0, 2, 0, 0, 2, 0, 0, 1,], 
+           [1, 1, 0, 0, 2, 1, 1, 1, 1, 1,], 
+           [1, 0, 0, 0, 0, 2, 0, 0, 0, 1,], 
+           [1, 0, 0, 1, 0, 0, 0, 1, 0, 1,], 
+           [1, 1, 0, 0, 1, 0, 0, 1, 0, 1,], 
+           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,], 
+           ],
+    map2 = [ // 1  2  3  4  5  6  7  8  9
+           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,], 
+           [1, 0, 0, 1, 1, 0, 0, 1, 0, 1,], 
+           [1, 1, 0, 1, 0, 0, 0, 0, 0, 1,], 
+           [1, 0, 0, 0, 0, 1, 1, 0, 0, 1,],
+           [1, 0, 0, 2, 0, 1, 2, 1, 0, 1,], 
+           [1, 1, 0, 0, 2, 0, 1, 0, 1, 1,], 
+           [1, 0, 1, 0, 0, 0, 0, 0, 0, 1,], 
+           [1, 0, 0, 0, 1, 1, 0, 0, 0, 1,], 
+           [1, 1, 0, 0, 1, 1, 0, 1, 1, 1,], 
+           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,], 
+           ],
+    map3 = [ // 1  2  3  4  5  6  7  8  9
+           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,], 
+           [1, 0, 0, 0, 1, 0, 0, 1, 0, 1,], 
+           [1, 1, 0, 0, 1, 0, 0, 0, 0, 1,], 
+           [1, 0, 1, 0, 0, 0, 1, 1, 2, 1,], 
+           [1, 0, 0, 0, 0, 1, 2, 0, 0, 1,], 
+           [1, 1, 1, 0, 2, 0, 0, 0, 1, 1,], 
+           [1, 0, 1, 0, 0, 0, 0, 0, 0, 1,], 
+           [1, 0, 0, 0, 0, 1, 0, 1, 0, 1,], 
+           [1, 1, 0, 0, 1, 1, 0, 1, 1, 1,], 
+           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,], 
+           ];
+
+var map, mapW = map1.length, mapH = map1[0].length;
+map = map1; //default map
+
+// Semi-constants
+var WIDTH = window.innerWidth,
+  HEIGHT = window.innerHeight,
+  ASPECT = WIDTH / HEIGHT,
+  UNITSIZE = 250,
+  WALLHEIGHT = UNITSIZE / 3,
+  AISPEED = 5;
+  MOVESPEED = 20,
+  LOOKSPEED = 0.075,
+  BULLETMOVESPEED = MOVESPEED * 25,
+  NUMAI = 5,
+  SAFEDISTANCE = 40,
+  PROJECTILEDAMAGE = 20;
+
+// var YGLOW_COLOR = "#ffdb00", BGLOW_COLOR = "#2fcbff";
+var YGLOW_COLOR = "#fff", BGLOW_COLOR = "#ffdb00";
+
+var scene, camera, renderer,
+    wallParent = new THREE.Object3D(),
+    aiParent = new THREE.Object3D(),
+    bulletParent = new THREE.Object3D(),
+    another_player;
+var flag_anim = false;
+
+var runAnim = true, gameStart = false;
+var  mouse = new THREE.Vector2();
+mouse.x = 0; mouse.y = 0;
+var health, score, startTime, elapsedTime;
+
+// audio
+var player_sound, ai_sound, blast, birds_sound;
+
+//channel
+var send_to_channel = false;
+var last_walk_update = Date.now();
+//test
+var ai_shoot = true;
+// survive time
+var total_time = 180000;
+// page control
+var show_intro = false, show_result = false, show_keyboard = false;
+// movement key control 
+var key = {left: 65 , right: 68 , forward: 87, backward: 83 }
+// touch screen
+var touchable, TMOVE_WIDTH =150, TMOVE_HEIGHT = 150;
+var touch_mouse = {x: WIDTH/2, y: HEIGHT/2};
+
+// -------------------------------------------- |
+// -        Setup and  Draw the scene         - |
+// -------------------------------------------- |
+function setup()
+{
+  // set up all the 3D objects in the scene 
+  createScene();
+  setupAI();
+  drawMiniMap();
+
+  // now reset score and health
+  gameStart = false;
+
+  // render
+  draw();
+}
+
+// var last_update = Date.now();
+function draw()
+{ 
+  if(runAnim){
+    // draw THREE.JS scene
+    renderer.render(scene, camera);
+    // loop draw function call
+    requestAnimationFrame(draw);
+    if(gameStart&&state.game_type != "em"){
+      send_to_channel = false;
+      updateBullets();
+      updateAI();
+      if(fireball_list.length > 0){ updateFireBall(); }
+      checkHealth();
+      // displayTime();
+      // checkReachFlag();
+      if(state.game_type == "cf"){
+        display_cf_Time();
+        checkReachFlag();
+        if(flag_anim) render_flag();
+      }
+      if(state.game_type == "s3"){
+        display_s3_Time();
+        checkTime();
+      }
+    }
+    else if(gameStart&&state.game_type == "em"){
+      updateBullets();
+    }
+    redrawMap();
+  }
+}
+
+function createScene()
+{
+  scene = new THREE.Scene(); // The "world" environment. Holds all other objects.
+
+ 
+  // Set up camera so we know from where to render the scene
+  camera = new THREE.PerspectiveCamera(60, ASPECT, 1, 10000); // Field Of Viw, aspect ratio, near, far
+  camera.position.y = UNITSIZE * .2; // Raise the camera off the ground
+  camera.position.z = 100;
+  camera.position.x = 0;
+
+  // move camera to get top view
+  // camera.position.z = 0;
+  // camera.position.x = 0;
+  // camera.position.y = 2100;
+  // camera.rotation.x = -Math.PI/2;
+  scene.add(camera); // Add the camera to the scene
+
+
+  // Handle drawing as WebGL (faster than Canvas but less supported by browsers)
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(WIDTH, HEIGHT); // Give the renderer the canvas size explicitly
+  renderer.setClearColor( "#D6F1FF");// sky color
+  // Add the canvas to the document
+  document.body.appendChild(renderer.domElement); // Add the canvas to the document
+
+  // Lighting
+  var directionalLight1 = new THREE.DirectionalLight( "#ffffff", 0.6 );
+  directionalLight1.position.set( -1.5, 1, -1.5 );
+    scene.add( directionalLight1 );
+  var directionalLight2 = new THREE.DirectionalLight( "#ffffff", 1.2);
+  // var directionalLight2 = new THREE.HemisphereLight( 0x0000ff, 0x00ff00, 0.6 ); 
+  directionalLight2.position.set( 100, 100, 100 );
+  scene.add( directionalLight2 );
+
+
+  var units = mapW;
+ 
+  // Geometry: floor
+  // THREE.ImageUtils.crossOrigin = '';
+  var floorTexture = THREE.ImageUtils.loadTexture('./images/floor1.jpg');
+  floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+  floorTexture.repeat.set(units*3, units*3);
+  floorTexture.anisotropy = 36;
+
+  var floor = new THREE.Mesh(
+      new THREE.BoxGeometry(units * UNITSIZE, 10, units * UNITSIZE),
+      new THREE.MeshLambertMaterial({map : floorTexture})
+  );
+  scene.add(floor);
+  scene.add(wallParent);
+  scene.add(aiParent);
+  scene.add(bulletParent);
+ 
+  // Geometry: walls
+  var cube = new THREE.BoxGeometry(UNITSIZE, WALLHEIGHT, UNITSIZE);
+  var wallTexture1 = THREE.ImageUtils.loadTexture('./images/wall-1.jpg');
+  var materials = new THREE.MeshLambertMaterial({map: wallTexture1});
+  // var wallTexture2 = t.ImageUtils.loadTexture('./images/wall-1.jpg');
+  // var materials = [
+  //                  new t.MeshLambertMaterial({map: wallTexture1}),
+  //                  new t.MeshLambertMaterial({map: wallTexture1}),
+  //                  ];
+  for (var i = 0; i < mapW; i++) {
+    for (var j = 0, m = map[i].length; j < m; j++) {
+      if (map[i][j]) {
+        var wall = new THREE.Mesh(cube, materials);
+        // wall.name = "wall";
+        // var wall = new t.Mesh(cube, materials[map[i][j]-1]);
+        // wall.castShadow = true;
+        // wall.receiveShadow = true;
+        wall.position.x = (i - units/2) * UNITSIZE;
+        wall.position.y = WALLHEIGHT/2;
+        wall.position.z = (j - units/2) * UNITSIZE;
+        wall.castShadow = true;
+        wallParent.add(wall);
+      }
+    }
+  }
+
+  // add axis arrowhelper 
+  // var dir = new THREE.Vector3( 1, 0, 0 );
+  // var origin = new THREE.Vector3( 0, 0, 0 );
+  // var length = 100;
+
+  // var xArrow = new THREE.ArrowHelper( dir, origin, length, "red" );
+  // scene.add( xArrow );
+
+  // dir = new THREE.Vector3( 0, 1, 0 );
+  // origin = new THREE.Vector3( 0, 0, 0 );
+
+  // var yArrow = new THREE.ArrowHelper( dir, origin, length, "darkgreen" );
+  // scene.add( yArrow );
+
+  // dir = new THREE.Vector3( 0, 0, 1 );
+  // origin = new THREE.Vector3( 0, 0, 0 );
+
+  // var zArrow = new THREE.ArrowHelper( dir, origin, length, "blue" );
+  // scene.add( zArrow );
+
+
+    // shadows
+  renderer.shadowMap.enabled = true;
+  // directionalLight1.castShadow = true;
+  directionalLight2.castShadow = true;
+  floor.castShadow = true;
+  floor.receiveShadow = true;
+}
+
+// -------------------------------------------- |
+// -      Changes of the Game                 - |
+// -------------------------------------------- |
+
+// start a new game
+function change_map(map_num){
+  $('.map_btn').css('box-shadow','none');
+  d3.select("svg").remove();
+
+  if (map_num == 1) { map = map1; $('#map1').css('box-shadow','2px 2px 8px yellow');}
+  else if (map_num == 2) { map = map2; $('#map2').css('box-shadow','2px 2px 5px yellow');}
+  else { map = map3; $('#map3').css('box-shadow','2px 2px 5px yellow');}
+
+  createNewWall(map_num);
+  camera.position.set(state.game_data[state.player_str].x, UNITSIZE*.2, state.game_data[state.player_str].z);
+
+  if(state.player_num == 1){
+    initialize_1p();
+  }
+  else if(state.player_num == 2){
+    initialize_2p();
+  }
+
+  // render
+  drawMiniMap();
+  runAnim = true; 
+  draw();
+}
+
+function createNewWall(map_num){
+
+  for( var i = wallParent.children.length - 1; i >= 0; i--) { 
+    wallParent.remove(wallParent.children[i]);
+  }
+
+  var cube = new THREE.BoxGeometry(UNITSIZE, WALLHEIGHT, UNITSIZE);
+
+  if (map_num == 1) {
+    var wallTexture1 = THREE.ImageUtils.loadTexture('./images/wall-1.jpg'); 
+  }
+  else if (map_num == 2) { 
+    var wallTexture1 = THREE.ImageUtils.loadTexture('./images/wall-2.jpg'); 
+  }
+  else { 
+    var wallTexture1 = THREE.ImageUtils.loadTexture('./images/wall-3.jpg'); 
+  }
+
+  var materials = new THREE.MeshLambertMaterial({map: wallTexture1});
+  // var wallTexture2 = t.ImageUtils.loadTexture('./images/wall-1.jpg');
+  // var materials = [
+  //                  new t.MeshLambertMaterial({map: wallTexture1}),
+  //                  new t.MeshLambertMaterial({map: wallTexture1}),
+  //                  ];
+  var units = mapW;
+
+  for (var i = 0; i < mapW; i++) {
+    for (var j = 0, m = map[i].length; j < m; j++) {
+      if (map[i][j]) {
+        var wall = new THREE.Mesh(cube, materials);
+        // wall.name = "wall";
+        // var wall = new t.Mesh(cube, materials[map[i][j]-1]);
+        // wall.castShadow = true;
+        // wall.receiveShadow = true;
+        wall.position.x = (i - units/2) * UNITSIZE;
+        wall.position.y = WALLHEIGHT/2;
+        wall.position.z = (j - units/2) * UNITSIZE;
+        wall.castShadow = true;
+        wallParent.add(wall);
+      }
+    }
+  }
+}
+
+function game_begin(){
+    $(".info_page").hide();
+    $("#ready").show();
+    $("#ready").fadeOut(600);
+    gameStart = true;
+    runAnim = true;
+    startTime = Date.now();
+    redrawMap();
+    draw();
+}
+
+function get_avail_gameid(){
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function() { 
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+            show_avail_gameid(xmlHttp.responseText);
+    }
+    if(state.player_num ==2){
+      xmlHttp.open("GET", "/get_avail_gameid/?game_type="+state.game_type, true); // true for asynchronous 
+      xmlHttp.send(null);
+    } 
+}
+
+function show_avail_gameid(text){
+  // console.log(text);
+  text = JSON.parse(text);
+  $(".avail_ids").text('');
+  if( text.length > 5) {num_ids = 5;}
+  else{num_ids =  text.length;} 
+
+  for(var i = 0; i <num_ids; i++){
+    if(text[i].data_id != state.game_key){
+      $(".avail_ids").append(" <button class='change_game_id'>"  + text[i].data_id + "</button>");
+    }
+  } 
+
+  if( $(".avail_ids button").length == 0) {
+    $(".avail_ids").append('<p>No Available Game</p>'); 
+    return;
+  } 
+}
+
+function change_game(id){
+  if (id == "new") {
+    var url = '/'  + '?player_num=' + state.player_num + '&game_type=' + state.game_type;
+    window.location.replace(url);
+  }
+  else{
+    var url = '/?g=' + id + '&player_num=' + state.player_num + '&game_type=' + state.game_type;
+    window.location.replace(url);
+  }
+}
+
+function end_game(){
+  gameStart = false;
+  runAnim = false;
+  var data = {"player": state.player_str, 
+              "score": state.game_data[state.player_str].score,
+              "time": Date.now() - startTime };
+  // console.log("open_winner:"+Date.now());
+  if(state.game_type == "cf" && state.player_num == 2){
+    sendMessage('/update_winner', 'data=' + JSON.stringify(data));  
+    $('.info_page').hide();
+    $('#result_text').text('');
+    $('#result').show();
+  }
+  else if(state.game_type == "cf" &&state.player_num == 1){
+    $('.info_page').hide();
+    sendMessage('/update_score', 'data=' + JSON.stringify(data)); 
+    $('#result_text').text('You got the flag');
+    $('#result').show();  
+    setTimeout(function(){get_scoreboard(); }, 200);   
+  }
+  else if(state.game_type == "s3" &&state.player_num == 1){
+    $('.info_page').hide();
+    sendMessage('/update_score', 'data=' + JSON.stringify(data)); 
+    $('#result_text').text('You final score is: ' + state.game_data[state.player_str].score);
+    $('#result').show();
+    setTimeout(function(){get_scoreboard(); }, 200);   
+  }
+  else if(state.game_type == "s3" &&state.player_num == 2){
+    $('.info_page').hide();
+    sendMessage('/update_score', 'data=' + JSON.stringify(data)); 
+    $('#result_text').text('You final score is: ' + state.game_data[state.player_str].score);
+    $('#result').show();
+    setTimeout(function(){get_scoreboard(); }, 200);   
+  }
+}
+
+function get_scoreboard(){
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function() { 
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+            show_scoreboard(xmlHttp.responseText);
+    }
+    if(state.game_type == "cf" && state.player_num ==2){
+      xmlHttp.open("GET", "/get_cf_2p_scoreboard", true); // true for asynchronous 
+      xmlHttp.send(null);
+    }
+    else if(state.game_type == "cf" && state.player_num ==1) {
+      xmlHttp.open("GET", "/get_cf_1p_scoreboard", true); // true for asynchronous 
+      xmlHttp.send(null);     
+    }
+    else if(state.game_type == "s3" && state.player_num ==1) {
+      xmlHttp.open("GET", "/get_s3_1p_scoreboard", true); // true for asynchronous 
+      xmlHttp.send(null);     
+    }
+    else if(state.game_type == "s3" && state.player_num ==2) {
+      // console.log("get_s3_2p_scoreboard");
+      xmlHttp.open("GET", "/get_s3_2p_scoreboard", true); // true for asynchronous 
+      xmlHttp.send(null);     
+    }
+}
+
+function show_scoreboard(scores){
+  scores = JSON.parse(scores);
+  // console.log(scores);
+  $(".top_scores").text('');
+  if(state.game_type == "cf"){
+    $(".top_scores").append('<tr> <th>Rank</th>' +
+                                  '<th>User</th>' +
+                                  '<th>Time(s)</th>' +
+                                  '<th>Score</th> </tr>'); 
+
+    for(var i = 0; i <scores.length; i++){
+        $(".top_scores").append('<tr> <td>' + (i+1) + '</td>' +
+                                      '<td>' + scores[i].user + '</td>' +
+                                      '<td>' + scores[i].time/1000 + '</td>' +
+                                      '<td>' + scores[i].score + '</td> </tr>');
+      
+    }
+  }
+  else if(state.game_type == "s3"){
+    $(".top_scores").append('<tr> <th>Rank</th>' +
+                                  '<th>User</th>' +
+                                  '<th>Score</th> </tr>'); 
+
+    for(var i = 0; i <scores.length; i++){
+        $(".top_scores").append('<tr> <td>' + (i+1) + '</td>' +
+                                      '<td>' + scores[i].user + '</td>' +
+                                      '<td>' + scores[i].score + '</td> </tr>');
+      
+    }
+  }
+}
+
+// -------------------------------------------- |
+// -   Check and Display Game Status          - |
+// -------------------------------------------- |
+
+// check if player reach the flag
+function checkReachFlag(){
+  // draw the flag when player is close
+  if(distance(state.game_data.goal.x, state.game_data.goal.z, camera.position.x, camera.position.z) <= 500){
+    flag_anim = true;
+    // get the flag
+    if(distance(state.game_data.goal.x, state.game_data.goal.z, camera.position.x, camera.position.z) <= SAFEDISTANCE){
+      $('#heal').show();
+      $('#heal').fadeOut(100);
+      // console.log("winner:", state.player_str);
+      end_game();
+      return;
+    }
+  }
+  else{
+    flag_anim = false; // turn off animation if player is too far
+  }
+}
+
+// check health
+function checkHealth(){
+  if(state.game_data[state.player_str].health <= 0){
+    state.game_data[state.player_str].x = state.game_data[state.player_str].org_x;
+    state.game_data[state.player_str].z = state.game_data[state.player_str].org_z;
+    state.game_data[state.player_str].health = 100;
+    state.game_data[state.player_str].score = 0;
+    state.game_data[state.player_str].powerbullets = 0;
+
+    // change to channel
+    var data = JSON.parse(JSON.stringify(state.game_data));
+    data.update_time = Date.now();
+    data.player = state.player_str;
+    data = JSON.stringify(data);
+    // console.log("open_health:"+Date.now());
+    sendMessage('/update_game', 'data=' + data);  
+
+    $("#reset").show();
+    $("#reset").fadeOut(2000);
+    camera.position.set(state.game_data[state.player_str].x, UNITSIZE * .2, state.game_data[state.player_str].z);
+    // update scoreboard
+    if(state.player_str == "player1"){
+      $("#score1").text(state.game_data[state.player_str].score);
+      $("#health1").text(state.game_data[state.player_str].health);      
+    }
+    else{
+      $("#score2").text(state.game_data[state.player_str].score);
+      $("#health2").text(state.game_data[state.player_str].health);
+    }
+  }
+}
+
+// check time
+function checkTime(){
+  if (Date.now() - startTime >= total_time) end_game();
+}
+
+function display_cf_Time(){
+  $('#play_time').text( 'Time: ' + (Date.now()-startTime)/1000 + ' s');
+}
+
+function display_s3_Time(){
+  var seconds = (startTime + total_time-Date.now() )/1000;
+  var minutes = Math.floor(seconds/60);
+  var seconds = seconds%60;
+  seconds = Math.round(seconds * 100) / 100;
+  if(minutes < 0) minutes = 0;
+  if(seconds < 0) seconds = 0;
+  $('#play_time').text( 'Time: ' + minutes + ' mins ' +  seconds + ' s');
+}
+
+// -------------------------------------------- |
+// -        Check Collision                   - |
+// -------------------------------------------- |
+
+// check player collision with the wall
+function playerCollision(ray, origin, direction, obstacles, mindist){
+  ray.set(origin, direction);
+  var intersects = ray.intersectObjects( obstacles );
+  if(intersects.length > 0){
+    if(intersects[0].distance < mindist){
+      // console.log("hit wall");
+      return true;
+    }
+  }
+  return false;
+}
+
+// Check whether a Vector3 v overlaps with a wall.
+function checkWallCollision(v) {
+  var c = getMapSector(v);
+  return map[c.x][c.z] > 0;
+}
+
+// -------------------------------------------- |
+// -       Cubes BeHavior Related             - |
+// -------------------------------------------- |
+// set up AIs and booster cubes
+var ai = [];
+function setupAI() {
+  for (var i = 0; i < NUMAI; i++) {
+    createAI(i);
+  }
+  createMedicine();
+  createIce();
+  createFlag();
+  if(state.player_num == 2){
+    $("#choose_game_id").show();
+    get_avail_gameid();
+  }
+  else{
+    $("#choose_game_id").hide();
+  }
+}
+
+// create AI
+function createAI(i) {
+
+  var aiGeo = new THREE.BoxGeometry(40, 40, 40);
+  var aiTexture = new THREE.ImageUtils.loadTexture('images/face1.jpg');
+  var aiMaterial = new THREE.MeshBasicMaterial({map: aiTexture});
+
+  var o = new THREE.Mesh(aiGeo, aiMaterial);
+  o.castShadow = true;
+  // o.receiveShadow = true;
+  o.name = "ai"+i;
+
+  // var availSites = currentEmptySites();
+  // var n = getRandBetween(0, availSites.length-1);
+  // var x = Math.floor(availSites[n].x- mapW/2) * UNITSIZE;
+  // var z = Math.floor(availSites[n].z - mapW/2) * UNITSIZE;
+  o.position.set(0, UNITSIZE * 0.2, 0);
+
+  o.lastRandomX = 0;
+  o.lastRandomZ = 0;
+   // o.lastRandomX = Math.random();
+  // o.lastRandomZ = Math.random(); 
+  o.lastShot = Date.now(); // Time for last shot
+  // o.freezeStart = Date.now()-10000;
+  o.visible = false;
+
+  aiParent.add(o);
+  // createGlow(o, BGLOW_COLOR);
+}
+
+// create medicine cube
+function createMedicine() {
+  var cubeGeo = new THREE.BoxGeometry(30, 30, 30);
+  var cubeTexture = new THREE.ImageUtils.loadTexture('images/medicine.png');
+  var cubeMaterial = new THREE.MeshBasicMaterial({map: cubeTexture});
+
+  var o = new THREE.Mesh(cubeGeo, cubeMaterial);
+  o.castShadow = true;
+  o.name = "medicine";
+  // o.receiveShadow = true;
+
+  o.position.set(0, UNITSIZE * 0.2, 0);
+  o.visible = false;
+
+  aiParent.add(o);
+  createGlow(o, YGLOW_COLOR);
+}
+
+// create ice cube
+function createIce() {
+  var cubeGeo = new THREE.BoxGeometry(30, 30, 30);
+  var cubeTexture = new THREE.ImageUtils.loadTexture('images/ice.jpg');
+  var cubeMaterial = new THREE.MeshBasicMaterial({map: cubeTexture});
+
+  var o = new THREE.Mesh(cubeGeo, cubeMaterial);
+  o.castShadow = true;
+  // o.receiveShadow = true;
+  o.name = "ice";
+
+  o.position.set(0, UNITSIZE * 0.2, 0);
+  o.visible = false;
+
+  aiParent.add(o);
+  createGlow(o, BGLOW_COLOR);
+}
+
+// create flag
+var pins = [], clothGeometry;
+function createFlag() {
+  var poleGeo = new THREE.BoxGeometry(1, 80, 1);
+  var poleMaterial = new THREE.MeshLambertMaterial( { color: "white"} );
+  var o = new THREE.Mesh(poleGeo, poleMaterial);
+
+  for (var j=0;j<=cloth.h;j++){pins.push(cloth.index(0, j));}
+
+  // cloth material
+  var clothMaterials = new THREE.MeshLambertMaterial( { color: 0xff0000 } );
+  clothMaterials.side = THREE.DoubleSide; // if not, the flag will disappear from certain angle 
+
+  // cloth geometry
+  clothGeometry = new THREE.ParametricGeometry( clothFunction, cloth.w, cloth.h );
+  clothGeometry.dynamic = true;
+  clothGeometry.computeFaceNormals();
+
+  // cloth mesh
+  flag = new THREE.Mesh( clothGeometry, clothMaterials);
+
+  o.castShadow = true;
+  o.name = "goal";
+  o.position.set(0, UNITSIZE * 0.2, 0);
+  o.visible = false;
+
+  aiParent.add(o);
+  o.add( flag );
+  flag.position.set( 0, 30, 0 );
+}
+
+function render_flag(){
+
+  var time = Date.now();
+
+  // These two variables are claimed in Flag.js
+  windStrength = Math.cos( time / 7000 ) * 100 + 200;
+  windForce.set( Math.sin( time / 2000 ), Math.cos( time / 3000 ), Math.sin( time / 1000 ) ).normalize().multiplyScalar( windStrength );
+
+  simulate(time);
+  // var timer = Date.now() * 0.0002;
+
+  var p = cloth.particles;
+
+  for ( var i = 0, il = p.length; i < il; i ++ ) {
+
+    clothGeometry.vertices[ i ].copy( p[ i ].position );
+
+  }
+
+  clothGeometry.computeFaceNormals();
+  clothGeometry.computeVertexNormals();
+
+  clothGeometry.normalsNeedUpdate = true;
+  clothGeometry.verticesNeedUpdate = true;
+}
+
+// create character for another player
+function createPlayer() {
+  // console.log("createp");
+
+  var cubeGeo = new THREE.BoxGeometry(30, 30, 30);
+
+  if(state.player_str=="player1"){
+    // var cubeMaterial = new THREE.MeshBasicMaterial({color: 'orange'});
+    var cubeTexture = new THREE.ImageUtils.loadTexture('images/p2.jpg');
+    // console.log("draw_p2");
+  }
+  else if(state.player_str=="player2"){
+    var cubeTexture = new THREE.ImageUtils.loadTexture('images/p1.jpg');
+    // console.log("draw_p1");
+  }
+
+  var cubeMaterial = new THREE.MeshBasicMaterial({map: cubeTexture});
+  another_player = new THREE.Mesh(cubeGeo, cubeMaterial);
+  another_player.castShadow = true;
+  // o.receiveShadow = true;
+  another_player.name = "another_player";
+
+  another_player.position.set(0, UNITSIZE * 0.2, 0);
+  another_player.visible = false;
+  scene.add(another_player);
+}
+
+function createGlow(obj, colorString){
+  // create custom material from the shader code in html
+
+  var customMaterial = new THREE.ShaderMaterial( 
+  {
+      uniforms: 
+    { 
+      "c":   { type: "f", value: 0.1},
+      "p":   { type: "f", value: 1.2 },
+      glowColor: { type: "c", value: new THREE.Color(colorString) },
+      viewVector: { type: "v3", value: camera.position }
+    },
+    vertexShader:   $('#vertexShader').text(),
+    fragmentShader: $('#fragmentShader').text(),
+    side: THREE.FrontSide,
+    blending: THREE.AdditiveBlending,
+    transparent: true
+  });
+
+  var sphereGeom = new THREE.SphereGeometry(28, 16, 16);
+  // var cubeGeom = new THREE.BoxGeometry(55,55,55,2,2,2);
+  // var modifier = new THREE.SubdivisionModifier( 2 );
+  // modifier.modify( cubeGeom ); 
+
+  var glow = new THREE.Mesh( sphereGeom, customMaterial);
+  obj.add(glow);
+  // console.log(obj.children);
+}
+
+function replaceCube(a){
+  // console.log(a.name);
+  var availSites = currentEmptySites();
+  // console.log(availSites);
+  var n = getRandBetween(0, availSites.length-1);
+  var p1 = getMapSector({x: state.game_data["player1"].x, z: state.game_data["player1"].z});
+  var p2 = getMapSector({x: state.game_data["player2"].x, z: state.game_data["player2"].z});
+
+  var x = availSites[n].x;
+  var z = availSites[n].z;
+
+
+  while(distance(x,z, p1.x, p1.z) < 2.5 && distance(x,z, p2.x, p2.z) < 2.5){
+    n = getRandBetween(0, availSites.length-1);
+    x = availSites[n].x;
+    z = availSites[n].z;
+  }
+
+  //convert to 3D coordinates
+  var x = Math.floor(x - mapW/2) * UNITSIZE;
+  var z = Math.floor(z - mapW/2) * UNITSIZE;
+  // console.log("coor:"+x+","+z);
+  a.position.set(x, UNITSIZE * 0.2, z);
+}
+
+function updateAI(){
+  var aiRay = new THREE.Raycaster();
+  for (var i = aiParent.children.length-1; i >=0; i--) {
+    var a = aiParent.children[i];
+
+    // for medicine
+    if(Date.now() - state.game_data[a.name].hideStart > 10000 && a.name == "medicine"){
+      a.visible = true;
+      // box picked up by player
+      if(distance(a.position.x, a.position.z, camera.position.x, camera.position.z) <= SAFEDISTANCE){
+
+        $('#heal').show();
+        $('#heal').fadeOut(100);
+
+        health = state.game_data[state.player_str].health;
+        health =  Math.min(100, health + 10);
+
+        a.visible = false;
+        replaceCube(a);
+
+        state.game_data[state.player_str].health = health;
+        state.game_data["medicine"].hideStart = Date.now();
+        state.game_data["medicine"].x = a.position.x;
+        state.game_data["medicine"].z = a.position.z;    
+
+        send_to_channel = true;  
+        // console.log(state.game_data[player_str].health);
+        if(state.player_str == "player1"){
+          $("#health1").text(state.game_data[state.player_str].health);
+        } 
+        else{
+          $("#health2").text(state.game_data[state.player_str].health);
+        }
+
+        // aiParent.remove(a);
+        // setTimeout(function(){replaceCube("medicine");}, 5000); 
+      }
+      // rotate medicine box
+      a.rotation.y += 0.05;
+    } 
+
+    // for ice
+    else if(Date.now() - state.game_data[a.name].hideStart > 10000 && a.name == "ice"){
+      // box picked up by player
+      a.visible = true;
+      if(distance(a.position.x, a.position.z, camera.position.x, camera.position.z) <= SAFEDISTANCE){
+
+        $('#heal').show();
+        $('#heal').fadeOut(100);
+        a.visible = false;
+        replaceCube(a);
+
+        // add powerbullets
+        state.game_data[state.player_str].powerbullets += 5;
+
+        state.game_data["ice"].hideStart = Date.now();
+        state.game_data["ice"].x = a.position.x;
+        state.game_data["ice"].z = a.position.z;   
+        send_to_channel = true;  
+      }
+      // rotate the cube
+      // children automatically move and rotate with parent 
+      a.rotation.y += 0.05;
+    }
+
+    else if(Date.now() - state.game_data[a.name].hideStart > 10000 && a.name.indexOf('ai') !== -1){
+      a.visible = true;
+      // crush into player
+      if(distance(a.position.x, a.position.z, camera.position.x, camera.position.z) <= SAFEDISTANCE-20){
+        if(gameStart){
+          // decrease player's health
+          $('#hurt').show(0);
+          $('#hurt').fadeOut(100);  
+          state.game_data[state.player_str].health -= 5;
+
+          if (state.game_data[state.player_str].health  < 0) state.game_data[state.player_str].health = 0;  
+          if(state.player_str == "player1"){
+            $("#health1").text(state.game_data[state.player_str].health);
+          } 
+          else{
+            $("#health2").text(state.game_data[state.player_str].health);
+          }
+          send_to_channel = true; 
+        } 
+      }
+      
+      // AI shoot bullets to player
+      if (Date.now() > a.lastShot + 700 && distance(a.position.x, a.position.z, camera.position.x, camera.position.z) < 500 && gameStart &&ai_shoot) {
+       createBullet(a);
+       a.lastShot = Date.now();
+      }
+      
+      // AI move
+      var r = random();
+      if (r > 0.995) {
+        a.lastRandomX = random() * 2 - 1;
+        a.lastRandomZ = random() * 2 - 1;  
+      }
+
+      var v_old = a.position.clone();
+
+      a.translateX(AISPEED * a.lastRandomX);
+      a.translateZ(AISPEED * a.lastRandomZ);  
+      var v_new = a.position.clone();
+
+      var direction = v_new.sub(v_old).normalize();
+
+      if( playerCollision(aiRay, v_old, direction, aiParent.children, 25) ||
+        playerCollision(aiRay, v_old, direction, wallParent.children, 25) ){
+        a.translateX(-0.7 * AISPEED * a.lastRandomX + 0.4 * AISPEED *(random() * 2 - 1));
+        a.translateZ(-0.7 * AISPEED * a.lastRandomZ + 0.4 * AISPEED *(random() * 2 - 1));
+        // a.lastRandomX = random() * 2 - 1;
+        // a.lastRandomZ = random() * 2 - 1;  
+        a.lastRandomX = -0.85*a.lastRandomX + 0.15*(random() * 2 - 1);
+        a.lastRandomZ = -0.85*a.lastRandomZ + 0.15*(random() * 2 - 1);          
+      }
+      // if AI moves out of bound
+      var c = getMapSector(a.position);
+      if (c.x < -1 || c.x > mapW || c.z < -1 || c.z > mapH) {
+        a.visible = false;
+        replaceCube(a);
+        send_to_channel = true; 
+      }
+
+      state.game_data[a.name].x = a.position.x;
+      state.game_data[a.name].z = a.position.z;
+      state.game_data[a.name].lastRandomZ = a.lastRandomX;
+      state.game_data[a.name].lastRandomZ = a.lastRandomZ;
+         
+    }
+  }
+}
+
+function hideAI(){
+   for(var j = 0; j < aiParent.children.length; j++){
+    aiParent.children[j].visible = false;
+   }
+}
+
+// -------------------------------------------- |
+// -        Fireball Related                  - |
+// -------------------------------------------- |
+var fireball_list = [];
+var  uniforms; 
+
+function createFireBall(position){
+  // create custom material from the shader code in html
+
+    uniforms = { 
+      tExplosion: { 
+        type: "t", 
+        value: THREE.ImageUtils.loadTexture( './images/explosion.png')
+      },
+      time: { 
+        type: "f", 
+        value: 0.0 
+      }
+    };
+
+
+  var customMaterial = new THREE.ShaderMaterial( 
+  {
+      uniforms: uniforms,
+    vertexShader:   $('#perlin_vertexShader').text(),
+    fragmentShader: $('#perlin_fragmentShader').text(),
+    // transparent: true
+  });
+
+  // var sphereGeom = new THREE.SphereGeometry(12, 16, 16);
+  var icoGeom = new THREE.IcosahedronGeometry( 15, 4 )
+
+  var fireball = new THREE.Mesh(icoGeom, customMaterial);
+  fireball.startTime = Date.now();
+    fireball.position.set(position.x, position.y, position.z);
+    fireball_list.push(fireball);
+
+  scene.add( fireball );
+}
+
+function updateFireBall(){
+  uniforms.time.value = .00025 * ( Date.now() - fireball_list[0].startTime );
+  for(var i = 0; i<fireball_list.length; i++){
+
+    var fb = fireball_list[i];
+    // only show 2s
+    if(Date.now()-fb.startTime >= 500){
+      fireball_list.splice(i,1);
+      scene.remove(fb);
+    }
+  }
+}
+
+// -------------------------------------------- |
+// -        Bullets Related                   - |
+// -------------------------------------------- |
+// create bullet when left click
+var bullets = [];
+function createBullet(obj) {
+
+  if (obj === undefined) {
+    obj = camera;
+  }
+
+  var raycaster = new THREE.Raycaster();
+  var sphereGeo = new THREE.SphereGeometry(2, 6, 6);
+
+
+  if (obj instanceof THREE.Camera) {
+    var sphereMaterial = new THREE.MeshBasicMaterial({color: 'yellow'});
+    var sphere = new THREE.Mesh(sphereGeo, sphereMaterial);
+    sphere.position.set(obj.position.x, UNITSIZE * 0.2, obj.position.z);
+    if(state.game_data[state.player_str].powerbullets > 0){
+        createGlow(sphere, BGLOW_COLOR);
+        if(state.game_data[state.player_str].powerbullets > 0){
+          state.game_data[state.player_str].powerbullets -=1;
+        }
+    }
+
+    raycaster.setFromCamera( mouse, camera );
+    sphere.direction = raycaster.ray.direction;
+    player_sound.currentTime=0;
+    player_sound.play();
+  }
+  else { // AI shoot bullets
+    var sphereMaterial = new THREE.MeshBasicMaterial({color: 'brown'});
+    var sphere = new THREE.Mesh(sphereGeo, sphereMaterial);
+    sphere.position.set(obj.position.x, UNITSIZE * 0.2, obj.position.z);
+
+    var vector = camera.position.clone();
+    var obj_pos = obj.position.clone();
+    sphere.direction = vector.sub(obj_pos).normalize();
+    ai_sound.currentTime=0;
+    ai_sound.play();
+  }
+  sphere.owner = obj;
+
+  bullets.push(sphere);
+  bulletParent.add(sphere);
+
+  // return sphere;
+}
+
+function updateBullets() {
+  var player_str = state.user1 == state.me ? "player1" : "player2";
+  var hurt = false;
+  // var bray = new THREE.Raycaster();
+  // Update bullets. Walk backwards through the list so we can remove items.
+  for (var i = bulletParent.children.length-1; i >=0; i--) {
+    var b = bulletParent.children[i], p = b.position, d = b.direction;
+    if (checkWallCollision(p)) {
+      bulletParent.remove(b);
+      continue;
+    }
+    
+    // player bullets hit AI
+    if(b.owner == camera){
+      for (var i = aiParent.children.length-1; i >=0; i--) {
+        var a = aiParent.children[i];
+        if(!a.visible) continue;
+        var dist = 28;
+        if(b.children.length > 0){
+          dist = 350;
+        }
+
+        if(distance(a.position.x, a.position.z, p.x, p.z) <= dist){
+          if(a.name.indexOf("ai") !== -1){
+            a.visible = false;
+            createFireBall(a.position);
+            replaceCube(a); 
+
+            state.game_data[a.name].hideStart = Date.now();
+            state.game_data[a.name].x = a.position.x;
+            state.game_data[a.name].z = a.position.z;   
+            send_to_channel = true;
+
+            bulletParent.remove(b);
+
+            // play sound
+            blast.currentTime=0;
+            blast.play(); 
+            
+            state.game_data[player_str].score += 100; 
+            if(player_str == "player1"){
+              $("#score1").text(state.game_data[player_str].score);
+            } 
+            else{
+              $("#score2").text(state.game_data[player_str].score);
+            }
+          }
+          else{
+            bulletParent.remove(b);
+          }
+        }
+      } 
+    }
+    else{  // Bullet hits player
+      if (distance(p.x, p.z, camera.position.x, camera.position.z) < SAFEDISTANCE ) {
+       hurt = true;
+       state.game_data[player_str].health -= 5;
+       if (state.game_data[player_str].health < 0) state.game_data[player_str].health = 0;
+
+        if(player_str == "player1"){
+          $("#health1").text(state.game_data[player_str].health);
+        } 
+        else{
+          $("#health2").text(state.game_data[player_str].health);
+        }
+        bulletParent.remove(b);
+        send_to_channel = true; 
+      }
+    }
+
+    b.translateX(BULLETMOVESPEED/5 * d.x);
+    //bullets[i].translateY(speed * bullets[i].direction.y);
+    b.translateZ(BULLETMOVESPEED/5 * d.z);      
+  } 
+
+  if(send_to_channel == true && state.layer_num == 2){
+    var data = JSON.parse(JSON.stringify(state.game_data));
+    data.update_time = Date.now();
+    data.player = player_str;
+    last_walk_update = data.update_time; // make record of the last update for player position
+    data = JSON.stringify(data);
+    // console.log("open_update_bulletes:"+Date.now());
+    sendMessage('/update_game', 'data=' + data);  
+  }
+
+  if(hurt){
+    $('#hurt').show();
+    $('#hurt').fadeOut(100);
+  }
+}
+
+// -------------------------------------------- |
+// -      Math, Conversion btw 2D and 3D      - |
+// -------------------------------------------- |
+
+// get the distance between two objects
+function distance(x1, y1, x2, y2) {
+  return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+}
+
+// get the position in 2D map
+function getMapSector(v) {
+  var x = Math.floor((v.x + UNITSIZE / 2) / UNITSIZE + mapW/2);
+  var z = Math.floor((v.z + UNITSIZE / 2) / UNITSIZE + mapW/2);
+  return {x: x, z: z};
+}
+
+// random seed
+var seed =1;
+function random() {
+    // var x = Math.sin(Date.now() ) * 10000;
+    var x = Math.sin(seed) * 10000;
+    seed++;
+    return x - Math.floor(x);
+}
+
+//Get a random integer between lo and hi, inclusive.
+//Assumes lo and hi are integers and lo is lower than hi.
+function getRandBetween(lo, hi) {
+ return parseInt(Math.floor(Math.random()*(hi-lo+1))+lo, 10);
+}
+
+//  2D empty sites map
+// excluding the sites with moving cubes
+function currentEmptySites(){
+
+  var currentEmptySites=[];
+
+  var emptySitesMap = map.map(function(arr) {
+      return arr.slice();
+  });
+
+  if(aiParent.children.length > 0){
+    for(var i = 0; i < aiParent.children.length; i++){
+      var p = getMapSector(aiParent.children[i].position);
+      emptySitesMap[p.x][p.z] = 1;
+    }
+  }
+
+  var p = getMapSector(camera.position);
+  emptySitesMap[p.x][p.z] = 1;
+
+  for (var i = 0; i < mapW; i++) {
+    for (var j = 0, m = map[i].length; j < m; j++) {
+      if (emptySitesMap[i][j] == 0) {
+        currentEmptySites.push({"x": i , "z": j });
+         }
+     }
+  } 
+  return currentEmptySites;
+}
+
+// calculate the moving direction
+function showDir(v_new, v_old){
+
+  $('.arrow').css('opacity', '0.2');
+
+  if(Math.abs(v_new.z - v_old.z) < 5){
+    if(v_new.x < v_old.x) { $('#left').css('opacity','1'); }
+    else{ $('#right').css('opacity','1');}
+  }
+  else if((v_new.z - v_old.z) < 0){
+    if(Math.abs(v_new.x - v_old.x) < 5){ $('#top').css('opacity','1'); }
+    else if(v_new.x > v_old.x) { $('#topright').css('opacity','1');}
+    else{ $('#topleft').css('opacity','1');}    
+  }
+  else if((v_new.z - v_old.z) > 0){
+    if(Math.abs(v_new.x - v_old.x) < 5){ $('#bottom').css('opacity','1'); }
+    else if(v_new.x > v_old.x) { $('#bottomright').css('opacity','1');}
+    else{ $('#bottomleft').css('opacity','1');}    
+  }
+}
+
+// -------------------------------------------- |
+// -  Draw the mini map on screen with d3.js  - |
+// -------------------------------------------- |
+
+var svg;
+var mini_map_unit = 20;
+
+function drawMiniMap() {
+
+  svg = d3.select("#mini_map").append("svg")
+    .attr("preserveAspectRatio", "xMinYMin meet") //responsive SVG needs these 2 attributes and no width and height attr
+    .attr("viewBox", "0 0 200 200") 
+
+  var obj_list = getMovingData(); //Cubes and Players
+
+  svg.selectAll("circle")
+          .data(obj_list)
+          .enter()
+          .append("circle")
+          .attr("cx", function (d) { return d.x*mini_map_unit + 5 ; })
+          .attr("cy", function (d) { return d.y*mini_map_unit + 5 ; })
+          .attr("r", function (d) { return d.radius; })
+          .style("fill", function(d) { return d.color; });
+
+  wall_list = [];
+  for (var i = 0; i < mapW; i++) {
+    for (var j = 0, m = map[i].length; j < m; j++) {
+      if (map[i][j] > 0) {
+        wall_list.push({"x": i * mini_map_unit, "y": j * mini_map_unit});
+         }
+     }
+  }
+  // console.log(wall_list);
+
+  svg.selectAll("rect")
+     .data(wall_list)
+     .enter()
+     .append("rect")
+     .attr("x", function(d){return d.x})
+     .attr("y", function(d){return d.y})
+     .attr("width", mini_map_unit)
+     .attr("height", mini_map_unit)
+     .style("fill", "grey");
+}
+
+function redrawMap(){
+
+  var obj_list = getMovingData();
+  // console.log(obj_list);
+
+  // Make the changes
+  var circles = svg.selectAll("circle")
+        .data(obj_list);
+
+  circles.transition()
+   .duration(10)
+   .attr("cx", function(d) { return d.x*mini_map_unit + 5 ; })
+   .attr("cy", function(d) { return d.y*mini_map_unit + 5 ; })
+   .attr("r", function (d) { return d.radius; })
+   .style("fill", function(d) { return d.color; });     
+
+  circles.enter()
+   .append("circle")
+   .attr("r", function (d) { return d.radius; })
+   .attr("cx", function(d) { return d.x*mini_map_unit + 5 ; })
+   .attr("cy", function(d) { return d.y*mini_map_unit + 5 ; })
+   .style("fill", function(d) { return d.color; });
+
+  circles.exit()
+   .remove();
+}
+
+// get the position for player and targets
+function getMovingData(){
+
+  var obj_list = [];
+  if(state.game_type == "em"){
+    var e = getMapSector({x:camera.position.x, z: camera.position.z});
+    obj_list.push({"x":e.x, "y":e.z, "color" : "yellow", "radius": 5});
+    return obj_list;
+  }
+
+  for (var k in state.game_data) {
+
+    if (k == "goal") {
+      if(state.game_type == "cf"){
+        var e = getMapSector({x:state.game_data[k].x, z: state.game_data[k].z});
+        obj_list.push({"x":e.x, "y":e.z, "color" : "red", "radius": 6});
+      }
+    } 
+    else if (k == "player1") {
+      var e = getMapSector({x:state.game_data[k].x, z: state.game_data[k].z});
+      obj_list.push({"x":e.x, "y":e.z, "color" : "yellow", "radius": 5});
+      // console.log(state.game_data[k]);
+    }
+    else if (k == "player2") {
+      if(state.player_num == 2){
+        var e = getMapSector({x:state.game_data[k].x, z: state.game_data[k].z});
+        obj_list.push({"x":e.x, "y":e.z, "color" : "orange", "radius": 4.5});
+      }
+    }
+    else if(k == "medicine" && Date.now() - state.game_data[k].hideStart > 5000 ){
+      var e = getMapSector({x:state.game_data[k].x, z: state.game_data[k].z});
+      obj_list.push({"x":e.x, "y":e.z, "color" : "white", "radius": 4});
+    }
+    else if(k == "ice" && Date.now() - state.game_data[k].hideStart > 5000 ){
+      var e = getMapSector({x:state.game_data[k].x, z: state.game_data[k].z});
+      obj_list.push({"x":e.x, "y":e.z, "color" : "blue", "radius": 4});
+    }
+    else if (/^(ai)/.test(k) && Date.now() - state.game_data[k].hideStart > 5000) {
+      var e = getMapSector({x:state.game_data[k].x, z: state.game_data[k].z});
+      obj_list.push({"x":e.x, "y":e.z, "color" : "black", "radius": 3});
+    }
+  }
+
+
+  // console.log(obj_list);
+  return obj_list; 
+}
+
+// -------------------------------------------- |
+// -             Channel                      - |
+// -------------------------------------------- |
+
+function initialize() {
+  openChannel();
+  onMessage({data: '{{ initial_message }}'});
+}    
+
+function sendMessage(path, opt_param) {
+  path += '?g=' + state.game_key;
+  if (opt_param) {
+    path += '&' + opt_param;
+  }
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', path, true);
+  xhr.send();
+};
+      
+function onOpened() {
+  sendMessage('/opened');
+};
+
+function onMessage(m) {
+  // console.log("from new channel:"+ Date.now());
+
+  // start game
+  if( m.data=='start') {
+    game_begin();
+    return;
+  }
+
+  newState = JSON.parse(m.data.replace(/&quot;/g,'"'));
+
+  // if have a winner, stop game
+  if(newState.winner){
+    gameStart = false;
+    runAnim =false;
+    $('.info_page').hide();
+    $('#result').show();
+    if(newState.winner==state.player_str){
+      $('#result_text').text('Congratulations! You win!');
+    } 
+    else{
+      $('#result_text').text('Sorry, You lose the game!');
+    }
+    get_scoreboard();
+  }
+
+  var reset_camera = false, have_game_data = false;
+  var local_player_data;
+  if(!state.hasOwnProperty("game_data")) reset_camera = true;
+
+  if(state.game_data){
+    local_player_data =state.game_data[state.player_str];
+  }
+
+  state.game_data = JSON.parse(newState.game_data) || state.game_data;
+  state.user1 = newState.user1 || state.user1;
+  state.user2 = newState.user2 || state.user2;
+  state.user1_online = newState.user1_online ;
+  state.user2_online = newState.user2_online ;
+  state.winner = newState.winner || "";
+  state.player_num = newState.player_num || 1;
+  state.game_type = newState.game_type || "cf";
+
+  // console.log(newState);
+  if(state.hasOwnProperty("game_data")) have_game_data = true;
+  if(state.game_type == "s3" || state.game_type == "cf") $("#choose_player").show();
+
+  if(have_game_data){
+    if(reset_camera){
+      var player_str = state.user1 == state.me ? "player1" : "player2";
+      state.player_str = player_str;
+      camera.position.set(state.game_data[player_str].x, UNITSIZE * .2, state.game_data[player_str].z); // reset camera position at the beginning
+
+      // identify player
+      if(player_str == "player1"){
+        $('#p1').text('1 (you)');
+      }
+      else{
+        $('#p2').text('2 (you)');
+      }
+      
+      createPlayer(); // create character for another player
+
+      if(state.game_data.map != 1){ 
+        change_map(state.game_data.map); // change map
+      }
+    }
+    if( state.game_data.change_map == 1){
+      change_map(state.game_data.map);
+    }
+    if(!reset_camera && state.game_data.change_map ==0){
+      state.game_data[state.player_str] = local_player_data;
+    }
+    updateGame(state);
+  }
+}
+      
+function openChannel() {
+  var token = '{{ token }}';
+  var channel = new goog.appengine.Channel(token);
+  var handler = {
+    'onopen': onOpened,
+    'onmessage': onMessage,
+    'onerror': function() {},
+    'onclose': function() {}
+  };
+  var socket = channel.open(handler);
+  socket.onopen = onOpened;
+  socket.onmessage = onMessage;
+}
+
+function updateGame(state) {
+  if(state.player_num ==1 ){
+    initialize_1p();
+  }
+  else if ( state.player_num == 2 && (!state.user2 || state.user2 == '' )  ) {
+    initialize_2p();
+  }
+  else if ( state.player_num == 2 && state.user2 && state.user2 != '' ){
+    update_game_2p();
+  }
+};
+
+function updateCubes(game_data){
+  if(state.game_type == "em") { return;}
+  for(var j = 0; j < aiParent.children.length; j++){
+    var name = aiParent.children[j].name;
+    // console.log(name);
+    // console.log(game_data[name]);
+    aiParent.children[j].position.set(game_data[name].x, UNITSIZE * 0.2, game_data[name].z);
+    aiParent.children[j].visible = true;
+    aiParent.children[j].lastRandomX = game_data[name].lastRandomX;
+    aiParent.children[j].lastRandomZ = game_data[name].lastRandomZ;
+    if(name == "goal" && state.game_type == "s3"){aiParent.children[j].visible = false;}
+  }
+  if(state.player_num == 2){
+    if(state.player_str == "player1"){
+      another_player.position.set(game_data.player2.x, UNITSIZE * 0.2, game_data.player2.z);
+    }
+    else if(state.player_str == "player2"){
+      another_player.position.set(game_data.player1.x, UNITSIZE * 0.2, game_data.player1.z);
+    }
+    another_player.visible = true;
+  }
+}
+
+function initialize_1p(){
+  $(".info_page").hide();
+  $("#instruction").show();
+  $(".player_btn").css('box-shadow','none');
+  $("#1player").css('box-shadow','2px 2px 8px yellow');
+  if(state.game_type == "cf"){
+    $(".game_type_btn").css('box-shadow','none');
+    $("#cf").css('box-shadow','2px 2px 8px yellow');
+  }
+  else if(state.game_type == "s3"){
+    $(".game_type_btn").css('box-shadow','none');
+    $("#s3").css('box-shadow','2px 2px 8px yellow');
+  }
+  else if(state.game_type == "em"){
+    $(".game_type_btn").css('box-shadow','none');
+    $("#em").css('box-shadow','2px 2px 8px yellow');
+  }
+  $('.waiting').hide();
+  $('.not_waiting').hide();
+  $("#game_start").show();
+
+  $("#scoreboard").show();
+  $(".p2_score").hide();
+  $("#score1").text(state.game_data.player1.score);
+  $("#health1").text(state.game_data.player1.health); 
+  $("#status1").text("online");  
+  $('#play_time').text("Time: 0.000s");
+  gameStart = false;
+  updateCubes(state.game_data);  
+}
+
+function initialize_2p(){
+  $(".info_page").hide();
+  $("#instruction").show();
+  $(".player_btn").css('box-shadow','none');
+  $("#2player").css('box-shadow','2px 2px 8px yellow');
+  if(state.game_type == "cf"){
+    $(".game_type_btn").css('box-shadow','none');
+    $("#cf").css('box-shadow','2px 2px 8px yellow');
+  }
+  else if(state.game_type == "s3"){
+    $(".game_type_btn").css('box-shadow','none');
+    $("#s3").css('box-shadow','2px 2px 8px yellow');
+  }
+  else if(state.game_type == "em"){
+    $(".game_type_btn").css('box-shadow','none');
+    $("#em").css('box-shadow','2px 2px 8px yellow');
+  }
+  $('.waiting').show();
+  $('.not_waiting').hide();
+  get_avail_gameid();
+  $('#choose_game_id').show();
+  $("#game_start").hide();
+  gameStart = false;
+  $(".p2_score").show();
+  $("#status2").text("offline");
+  $("#score2").text('0');
+  $("#health2").text('100'); 
+  $('#play_time').text("Time: 0.000s");
+  updateCubes(state.game_data); 
+}
+
+function update_game_2p(){
+  $(".player_btn").css('box-shadow','none');
+  $("#2player").css('box-shadow','2px 2px 8px yellow');
+  $('.waiting').hide();
+  $('.not_waiting').show();
+  $("#game_start").show(); 
+  if(state.game_type == "cf"){
+    $(".game_type_btn").css('box-shadow','none');
+    $("#cf").css('box-shadow','2px 2px 8px yellow');
+  }
+  else if(state.game_type == "s3"){
+    $(".game_type_btn").css('box-shadow','none');
+    $("#s3").css('box-shadow','2px 2px 8px yellow');
+  } 
+  else if(state.game_type == "em"){
+    $(".game_type_btn").css('box-shadow','none');
+    $("#em").css('box-shadow','2px 2px 8px yellow');
+  }  
+  $("#scoreboard").show();
+  $("#score1").text(state.game_data.player1.score);
+  $("#health1").text(state.game_data.player1.health);  
+  if(state.user1_online == 1){
+    $("#status1").text("online"); 
+  } 
+  else if( state.user1_online == 0 ){
+    $("#status1").text("offline"); 
+  } 
+
+  $("#score2").text(state.game_data.player2.score);
+  $("#health2").text(state.game_data.player2.health); 
+  if(state.user2_online == 1){
+    $("#status2").text("online"); 
+  } 
+  else if(state.user2_online == 0){
+    $("#status2").text("offline"); 
+  } 
+
+  if(state.game_id){
+    $("#game_info").text("Current Game ID:" + state.game_id);
+  }
+  updateCubes(state.game_data);  
+}
+
+// ---------------------------- |
+// -  Touch Screen            - |
+// ---------------------------- |
+function is_touch_device() {
+  return 'ontouchstart' in window        // works on most browsers 
+      || navigator.maxTouchPoints;       // works on IE10/11 and Surface
+}
+
+function onTouchStart(e){
+  for(var i = 0; i<e.changedTouches.length; i++){
+    var nt = e.changedTouches[i];
+    if( gameStart && nt.target.id == "shoot_btn" ){
+      createBullet(camera);
+    } 
+  }
+}
+
+var rot = {clientX: WIDTH - 50, clientY: HEIGHT - 50}; // old left touch
+function onTouchMove(e){
+  e.preventDefault(); // don't do this for touch start, will prevent press button
+                      // but do this for touchmove to prevent scroll
+
+  for(var i = 0; i<e.changedTouches.length; i++){
+    // var event = $.Event('keypress');
+    var event = {};
+    var nt = e.changedTouches[i];  // new touch
+
+    // touch on right corner "move_around" pannel
+    if(nt.target.id == "move_around"){ 
+      // horizontal touchmove
+      if(Math.abs(nt.clientY - rot.clientY) < 1){  
+        if(nt.clientX < rot.clientX  ) {  // move left
+          event.which = key.left; 
+          playerWalk(event);
+        }
+        else { // move right
+          event.which = key.right; 
+          playerWalk(event);
+        }
+      }
+      // vertical touchmove
+      else if(Math.abs(nt.clientX - rot.clientX) < 1){
+        if(nt.clientY < rot.clientY ) {  // move forward
+          event.which = key.forward; 
+          playerWalk(event);
+        }
+        else { // move backward
+          event.which = key.backward; 
+          playerWalk(event);
+        }
+      }
+      rot = nt;
+    }
+    // touch on left corner "look_around" pannel
+    if(nt.target.id == "look_around"){ 
+      touch_mouse.clientX = nt.clientX/TMOVE_WIDTH * WIDTH; 
+      touch_mouse.clientY = HEIGHT/2; 
+      touch_mouse.x = touch_mouse.clientX;
+      touch_mouse.y = touch_mouse.clientY;
+      onDocumentMouseMove(touch_mouse);
+      // update touch display line
+      var xCoord = touch_mouse.x, yCoord = touch_mouse.y;
+      moveMouseDisplay(xCoord, yCoord);
+    }
+  }
+}
+
+// ---------------------------- |
+// -  Player  Controls        - |
+// ---------------------------- |
+
+// rotate camera when mousemove
+var mouseX = WIDTH/2;
+var angleX = -Math.PI/4;
+var incrementD = 2*Math.PI/WIDTH;
+
+function onDocumentMouseMove(e) {
+  // e.preventDefault();
+  // console.log(e.clientX+"; "+e.clientY);
+  // console.log(e.pageX+"; "+e.pageY);
+  // console.log("--------------------");
+
+  // calculate mouse position in normalized device coordinates
+  // (-1 to +1) for both components
+  mouse.x = (e.clientX / WIDTH) * 2 - 1;
+  mouse.y = - (e.clientY / HEIGHT) * 2 + 1;
+
+  // degree for the view to rotate
+  // angleX = (e.pageX - WIDTH/2) * 2*Math.PI/WIDTH;
+    difference = mouseX-e.clientX;
+    angleX-=incrementD*difference;
+    mouseX = e.clientX;
+    if(mouseX<=WIDTH/2-100&&difference>0){
+        angleX-=incrementD*2.5;
+    }
+    if(mouseX>=WIDTH/2+100&&difference<0){
+        angleX+=incrementD*2.5;
+    }
+
+  var targetPosition = new THREE.Vector3( 0, 0, 0 );
+
+  targetPosition.x = camera.position.x + 10 * Math.cos( angleX );
+  targetPosition.y = camera.position.y ;
+  targetPosition.z = camera.position.z + 10  * Math.sin( angleX );
+
+  camera.lookAt( targetPosition );
+
+  // calculate moving direction
+  v_new = targetPosition.clone();
+  v_old = camera.position.clone();
+
+  showDir(v_new, v_old);
+};
+
+// player walk
+function playerWalk(event)
+{
+  //current position, new position
+  var v_old = camera.position.clone();
+  var v_new = camera.position.clone();
+  var playerRay = new THREE.Raycaster();
+
+  //move left
+  if ( event.which == key.left)    
+  {
+    camera.translateX(-MOVESPEED);
+    v_new.copy(camera.position);
+    var direction = v_new.sub(v_old).normalize();
+
+    if( playerCollision(playerRay, v_old, direction, wallParent.children, 25)){
+      camera.translateX(MOVESPEED);
+    }
+  } 
+  // move right
+  else if ( event.which == key.right) 
+  {
+    camera.translateX(MOVESPEED);
+    v_new.copy(camera.position);
+    var direction = v_new.sub(v_old).normalize();
+
+    if( playerCollision(playerRay, v_old, direction, wallParent.children, 25)){
+      camera.translateX(-MOVESPEED);
+    }
+  }
+  // move backward
+  else if ( event.which == key.backward) 
+  {
+    camera.translateZ(MOVESPEED);
+    v_new.copy(camera.position);
+    var direction = v_new.sub(v_old).normalize();
+
+    if( playerCollision(playerRay, v_old, direction, wallParent.children, 25)){
+      // camera.position.z += 10;
+      camera.translateZ(-MOVESPEED);
+    }
+  }
+  // move forward
+  else if ( event.which == key.forward) 
+  {
+    camera.translateZ(-MOVESPEED);
+    v_new.copy(camera.position);
+    var direction = v_new.sub(v_old).normalize();
+
+    if( playerCollision(playerRay, v_old, direction, wallParent.children, 25)){
+      camera.translateZ(MOVESPEED);
+    }
+  }
+  // console.log("position:"+camera.position.x + "," + camera.position.z);
+
+  // send update to channel
+  // if (!state.user2 || state.user2 == '') {
+  //   return;
+  // }
+  // else{
+      state.game_data[state.player_str].x = camera.position.x;
+      state.game_data[state.player_str].z = camera.position.z;
+
+      if(state.player_num == 2){
+        if(Date.now()- last_walk_update > 100){
+          var tmp = JSON.parse(JSON.stringify(state.game_data));
+          tmp.player = state.player_str;
+          tmp.update_time = Date.now();
+          last_walk_update = tmp.update_time;
+          tmp  = JSON.stringify(tmp);
+          // console.log("open: player_walk" + Date.now());
+          sendMessage('/update_game', 'data=' + tmp);
+        }
+      }
+
+  // }
+
+  // calculate moving direction
+  v_new = camera.position.clone();
+  showDir(v_new, v_old);
+}
+
+// pause game during play
+function pauseGame() {
+  if($("#instruction").is(":visible") ){ show_intro = true;}
+  else if( $("#result").is(":visible") ){ show_result= true;}
+  $(".info_page").hide();
+  runAnim = false;
+  $("#pause").show();
+  elapsedTime = Date.now() - startTime;
+}
+
+//resume
+function resumeGame() {
+  $(".info_page").hide();
+  runAnim = true; 
+  // gameStart = true;
+  if(show_intro){$("#instruction").show(); show_intro = false; }
+  else if(show_result) {$("#result").show(); show_result = false;}
+  startTime = Date.now() - elapsedTime;
+  // render
+  redrawMap();
+  draw();
+}
+
+// set key for movement during play
+function showKeySet(){
+  if($("#instruction").is(":visible") ){ show_intro = true;}
+  else if( $("#result").is(":visible") ){ show_result= true;}
+  $(".info_page").hide();
+  runAnim = false;
+  show_keyboard = true;
+  $("#choose_key").show();
+  $("#key_error").hide();
+  elapsedTime = Date.now() - startTime;
+}
+
+function setKey(e){
+  e.preventDefault();
+
+  if( $('input[name="moving_direction"]:checked').val()=="left"){
+    key.left = e.which;
+  }
+  else if ($('input:radio[name="moving_direction"]:checked').val()=="right"){
+    key.right = e.which;
+  }
+  else if ( $('input[name="moving_direction"]:checked').val()=="forward"){
+    key.forward = e.which;
+  }
+  else if ( $('input[name="moving_direction"]:checked').val()=="backward"){
+    key.backward = e.which;
+  }
+  var tmp = [key.left, key.right, key.forward, key.backward];
+  var key_num = jQuery.unique( tmp ).length;
+  if(key_num != 4){$('#key_error').show(); $('#close_keyset').hide();}
+  else{$('#key_error').hide();$('#close_keyset').show();}
+
+  if(key.left > 64 && key.left < 91){
+    $(".left").text( String.fromCharCode(key.left));
+  }
+  else{
+    $(".left").text( key.left );
+  }
+  if(key.right > 64 && key.right < 91){
+    $(".right").text( String.fromCharCode(key.right));
+  }
+  else{
+    $(".right").text( key.right );
+  }
+  if(key.forward > 64 && key.forward < 91){
+    $(".forward").text( String.fromCharCode(key.forward));
+  }
+  else{
+    $(".forward").text( key.forward );
+  }
+  if(key.backward > 64 && key.backward < 91){
+    $(".backward").text( String.fromCharCode(key.backward));
+  }
+  else{
+    $(".backward").text( key.backward );
+  }
+}
+
+setTimeout(initialize, 0);
+
+$(document).ready(function(){
+  // touch screen btn
+  // $("button").on("touchstart touchend touchmove tap dbltap dragstart dragmove dragend", function(e){
+  //   e.stopPropagation();
+  // });
+  // set screen
+  setup();
+
+  // set audio
+  player_sound = document.getElementById("player_sound");
+  ai_sound = document.getElementById("ai_sound");
+  blast = document.getElementById("blast");
+  birds_sound = document.getElementById("birds");
+  player_sound.volume = 0.5; ai_sound.volume  = 0.5; blast.volume  = 0.5; birds_sound.volume = 0.5;
+  $('input[name="bird_sound"]').change( function(){
+      if( $('input[name="bird_sound"]:checked').val()=="on") {
+        birds_sound.volume = 0.5;
+      }
+      else if( $('input[name="bird_sound"]:checked').val()=="off") {
+        birds_sound.volume = 0;
+      }
+  });
+  $('input[name="shoot_sound"]').change( function(){
+      if( $('input[name="shoot_sound"]:checked').val()=="on") {
+        player_sound.volume = 0.5; 
+        blast.volume = 0.5; 
+        ai_sound.volume = 0.5;
+      }
+      else if( $('input[name="shoot_sound"]:checked').val()=="off") {
+        player_sound.volume = 0; 
+        blast.volume = 0; 
+        ai_sound.volume = 0;
+      }
+  });
+
+  setInterval(function(){
+    birds_sound.play();
+  }, 10500);
+
+  //change game_id pannel
+  $("#close_game_id").click( function(e){    
+    e.stopPropagation();
+     $('#choose_game_id').hide();
+  });
+
+
+  $("#game_start").click( function(event){    
+    event.stopPropagation();
+    if(state.player_num == 2){
+      // console.log("open_start" + Date.now());
+      sendMessage('/start_game', 'data=start');  
+    }
+    else{
+      game_begin();
+    }
+  });
+
+  // resume game
+  $("#resume").click( function(e){
+    e.stopPropagation();
+    resumeGame();
+  });
+
+  //control panel
+  $("#home").click( function(event){
+    event.stopPropagation();
+    if (confirm("Back to the main menu. Your current progress will not be saved. Are you sure?") == true){
+      var data = 1;
+      sendMessage('/update_map','data='+ data); // reset game
+    }
+  });
+
+  $("#question").click( function(event){
+    event.stopPropagation();
+    pauseGame();
+  });
+
+  $("#setting").click( function(event){
+    event.stopPropagation();
+    showKeySet();
+  });
+
+  $("#close_keyset").click( function(event){
+    event.stopPropagation();
+    show_keyboard = false;
+    resumeGame();
+  }); 
+
+  $("#choose_map").delegate("button", "click", function(e){
+    e.stopPropagation();
+    $(".map_btn").css('box-shadow','none');
+    $(this).css('box-shadow','2px 2px 8px yellow');
+    var map_id = $(this).attr("id");
+    if (map_id == "map1" && map != map1){
+      sendMessage('/update_map','data='+ 1);
+    }
+    else if (map_id == "map2" && map != map2){
+      sendMessage('/update_map','data='+ 2);
+    }
+    else if (map_id == "map3" && map != map3){
+      sendMessage('/update_map','data='+ 3);
+    }   
+  });
+
+  $(".startover").click( function(event){
+    event.stopPropagation();
+    // if (confirm("Do You want to go to the main menu? Your progress will be lost. ") == true){
+      $(".info_page").hide();
+      $("#instruction").show();
+      var data = 1;
+      sendMessage('/update_map','data='+ data); // reset game with default map1
+    // }
+  });
+
+  $('#ai_shoot').click(function(event){
+    event.stopPropagation();
+    ai_shoot = !ai_shoot;
+    var text = $('#ai_shoot').text()== "ai_off" ? "ai_on" : "ai_off";
+    $('#ai_shoot').text(text);
+  });
+
+
+  $("#1player").click(function(e){
+    e.stopPropagation();
+    if(state.player_num != 1){
+      state.player_num = 1;
+      $(".player_btn").css('box-shadow','none');
+      $(this).css('box-shadow','2px 2px 8px yellow');
+      change_game("new");
+    }
+  });
+
+  $("#2player").click(function(e){
+    e.stopPropagation();
+    if(state.player_num != 2){
+      state.player_num = 2;
+      $(".player_btn").css('box-shadow','none');
+      $(this).css('box-shadow','2px 2px 8px yellow');
+      sendMessage('/change_game_info', 'data=2');
+      initialize_2p();
+    }
+  });
+
+  $(".avail_ids").delegate("button", "click", function(e){
+    e.stopPropagation();
+    var new_id = $(this).text();
+    state.player_num = 2;
+    change_game(new_id, 2);
+  });
+
+  $("#s3").click(function(e){
+    e.stopPropagation();
+    $("#choose_player").show();
+    if(state.game_type != "s3" && state.player_num == 1) {
+      $(".game_type_btn").css('box-shadow','none');
+      $(this).css('box-shadow','2px 2px 8px yellow');
+      state.game_type = "s3";
+      sendMessage('/change_game_info', 'data=s3');
+    }
+    else if(state.game_type != "s3" && state.player_num == 2) {
+      state.game_type = "s3";
+      change_game("new");
+    }
+  });
+
+  $("#cf").click(function(e){
+    e.stopPropagation();
+    $("#choose_player").show();
+    if(state.game_type != "cf" && state.player_num == 1) {
+      $(".game_type_btn").css('box-shadow','none');
+      $(this).css('box-shadow','2px 2px 8px yellow');
+      state.game_type = "cf";
+      sendMessage('/change_game_info', 'data=cf');
+    }
+    else if(state.game_type != "cf" && state.player_num == 2) {
+      state.game_type = "cf";
+      change_game("new");
+    }
+  });
+
+  $("#em").click(function(e){
+    e.stopPropagation();
+    $("#choose_player").hide();
+    if(state.game_type != "em" && state.player_num == 1) {
+      $(".game_type_btn").css('box-shadow','none');
+      $(this).css('box-shadow','2px 2px 8px yellow');
+      state.game_type = "em";
+      sendMessage('/change_game_info', 'data=em');
+      hideAI();
+    }
+    else if(state.game_type != "em" && state.player_num == 2) {
+      state.game_type = "em";
+      state.player_num = 1;
+      change_game("new");
+    }
+  });
+
+  // pause game when mouse out of page
+  $("body").mouseleave(function(){
+    // console.log("mouse out");
+    if(!$('.info_page').is(':visible')){
+      pauseGame();
+    }
+  });
+
+  // touch or mouse events
+  var touchable = is_touch_device();
+  if(touchable){
+    // console.log("touch screeen");
+    $('.touch_pannel').show();
+    AISPEED = 2.5;
+    MOVESPEED = 10;
+    $(".pc").hide();
+    $(".mobile").show();
+    document.addEventListener( 'touchstart', onTouchStart, false ); 
+    document.addEventListener( 'touchmove', onTouchMove, false ); 
+  }
+  else{
+    $('.touch_pannel').hide();
+    $(".pc").show();
+    $(".mobile").hide();
+    document.addEventListener( 'mousemove', onDocumentMouseMove, false );// look around when mouse move
+    // shoot bullet by mouse click
+    $(document).click(function(e) {
+      // e.preventDefault();
+      if (e.which === 1 && gameStart) { // Left click only
+        createBullet(camera);
+      }
+    });
+  }
+
+  // key down event for player to walk
+  $(document).keydown(function(e) {
+    // e.preventDefault();
+    if(show_keyboard){ setKey(e);}
+    else {playerWalk(e);}
+   });
+});
+
+// notice the server when player leaves
+$(window).on('beforeunload', function(){
+  if(state.player_str){
+    sendMessage('/closed', 'data=' + state.player_str);
+  }
+});
+
+// Handle window resizing
+$(window).resize(function() {
+  WIDTH = window.innerWidth;
+  HEIGHT = window.innerHeight;
+  ASPECT = WIDTH / HEIGHT;
+  if (camera) {
+    camera.aspect = ASPECT;
+    camera.updateProjectionMatrix();
+  }
+  if (renderer) {
+    renderer.setSize(WIDTH, HEIGHT);
+  }
+  $('.info_page').css({width: WIDTH, height: HEIGHT});
+  mouse_displaySVG.attr("width", WIDTH).attr("height", HEIGHT);
+});
+
+// Mouse Display Lines
+// var xScale = d3.scale.linear().domain([0, WIDTH]).range([0, WIDTH]);
+// var yScale = d3.scale.linear().domain([0, HEIGHT]).range([0, HEIGHT]);
+
+var mouse_displaySVG = d3.select("body")
+  .append("svg")
+  .attr("width", WIDTH).attr("height", HEIGHT)
+  .attr("class", 'mouse_displaySVG');
+
+var mouse_lineWrap = mouse_displaySVG.append("g").attr("class", "mouse_lines");
+mouse_lineWrap.append("line").attr("id", "x_line")
+    .attr("x1", WIDTH * .4) // left line
+    .attr("x2", WIDTH * .6) // right line
+    .style("stroke", "#B2FF59")
+    .style("stroke-width", "1px");
+
+mouse_lineWrap.append("line").attr("id", "y_line")
+    .attr("y1", HEIGHT * .60) // top line
+    .attr("y2", HEIGHT * .70) // bottom line
+    .style("stroke", "#EEFF41")
+    .style("stroke-width", "2px");
+
+mouse_lineWrap.append("circle").attr("class", "mouse_circle")
+    .style("fill", "none").style("stroke", "#B2FF59")
+    .style("stroke-width", "1px").attr("r", 105);
+
+mouse_displaySVG.on("mousemove", function () {
+  // console.log("mouse");
+    var xCoord = d3.mouse(this)[0], yCoord = d3.mouse(this)[1];
+    moveMouseDisplay(xCoord, yCoord);
+});
+
+function moveMouseDisplay(xCoord, yCoord) {
+  // console.log(yCoord);
+    d3.select("#x_line").attr("y1", yCoord).attr("y2", yCoord);
+    d3.select("#y_line").attr("x1", xCoord).attr("x2", xCoord);
+    d3.select(".mouse_circle").attr("cx", xCoord).attr("cy", yCoord);
+}
+
+</script>
+
+  </body>
+</html>
